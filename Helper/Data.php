@@ -83,6 +83,8 @@ class Data
         }
         if ($customer->getData('telephone')) {
             $customer->setData('retail_telephone', $customer->getData('telephone'));
+        } else {
+            $customer->setData('retail_telephone', '');
         }
         if ($customer->getData('avatar')) {
             if (false !== strpos($customer->getData('avatar'), ';base64,')) {
