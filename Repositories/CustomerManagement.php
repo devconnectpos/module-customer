@@ -327,6 +327,7 @@ class CustomerManagement extends ServiceAbstract
     {
         $addData           = $address->getData();
         $addData['street'] = $address->getStreet();
+        $addData['company'] = is_null($address->getCompany()) ? '' : $address->getCompany();
         $_customerAdd      = new CustomerAddress($addData);
 
         return $_customerAdd->getOutput();
