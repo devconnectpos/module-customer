@@ -326,6 +326,8 @@ class CustomerManagement extends ServiceAbstract
     protected function getAddressData(\Magento\Customer\Model\Address $address)
     {
         $addData           = $address->getData();
+        $addData['first_name'] = $addData['firstname'];
+        $addData['last_name'] = $addData['lastname'];
         $addData['street'] = $address->getStreet();
         $addData['company'] = is_null($address->getCompany()) ? '' : $address->getCompany();
         $_customerAdd      = new CustomerAddress($addData);
