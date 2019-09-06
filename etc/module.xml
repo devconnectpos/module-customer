@@ -3,6 +3,7 @@
     <module name="SM_Customer" setup_version="0.0.5">
         <sequence>
             <module name="SM_XRetail"/>
+            <module name="Magento_Quote"/>
         </sequence>
     </module>
 </config>

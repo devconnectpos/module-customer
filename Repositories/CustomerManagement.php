@@ -29,6 +29,10 @@ use Magento\Newsletter\Model\SubscriberFactory;
 class CustomerManagement extends ServiceAbstract
 {
     /**
+     * @var \Magento\Framework\Registry
+     */
+    protected $registry;
+    /**
      * @var \Magento\Framework\App\ResourceConnection
      */
     protected $resource;
@@ -103,6 +107,19 @@ class CustomerManagement extends ServiceAbstract
     private $subscriberFactory;
 
     /**
+     * @var \Magento\Customer\Api\GroupManagementInterface
+     */
+    protected $customerGroupManagement;
+
+    protected $quoteFactory;
+
+    protected $quoteModel;
+
+    /**
+     * @var \SM\Sales\Repositories\OrderHistoryManagement
+     */
+    private $orderHistoryManagement;
+    /**
      * CustomerManagement constructor.
      *
      * @param \Magento\Framework\App\RequestInterface                          $requestInterface
@@ -123,7 +140,7 @@ class CustomerManagement extends ServiceAbstract
      * @param \SM\Integrate\Helper\Data                                        $integrateHelperData
      * @param \SM\Wishlist\Repositories\WishlistManagement                     $wishlistManagement
      * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory          $customerGridCollection
-     * @param SubscriberFactory $subscriberFactory
+     * @param SubscriberFactory                                                $subscriberFactory
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $requestInterface,
@@ -144,7 +161,11 @@ class CustomerManagement extends ServiceAbstract
         \SM\Integrate\Helper\Data $integrateHelperData,
         \SM\Wishlist\Repositories\WishlistManagement $wishlistManagement,
         \SM\Customer\Model\ResourceModel\Grid\CollectionFactory $customerGridCollection,
-        SubscriberFactory $subscriberFactory
+        \Magento\Customer\Api\GroupManagementInterface $customerGroupManagement,
+        SubscriberFactory $subscriberFactory,
+        \Magento\Quote\Model\QuoteFactory $quoteFactory,
+        \Magento\Framework\Registry $registry,
+        \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement
     ) {
         $this->customerConfigShare            = $customerConfigShare;
         $this->customerCollectionFactory      = $customerCollectionFactory;
@@ -162,6 +183,10 @@ class CustomerManagement extends ServiceAbstract
         $this->wishlistManagement             = $wishlistManagement;
         $this->customerGridCollectionFactory  = $customerGridCollection;
         $this->subscriberFactory              = $subscriberFactory;
+        $this->customerGroupManagement        = $customerGroupManagement;
+        $this->quoteFactory                   = $quoteFactory;
+        $this->orderHistoryManagement         = $orderHistoryManagement;
+        $this->registry                 = $registry;
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
 
@@ -206,6 +231,14 @@ class CustomerManagement extends ServiceAbstract
                     $customer->setData('subscription', true);
                 } else {
                     $customer->setData('subscription', false);
+                }
+
+                if ($this->integrateHelper->isIntegrateRP() && $this->integrateHelper->isAHWRewardPoints()) {
+                    $customer->setData('reward_point', $this->integrateHelper->getRpIntegrateManagement()
+                                                                              ->getCurrentIntegrateModel()
+                                                                              ->getCurrentPointBalance(
+                                                                                  $customerModel->getEntityId(),
+                                                                                  $this->storeManager->getStore($searchCriteria['storeId'])->getWebsiteId()));
                 }
 
                 $customers[] = $customer;
@@ -654,11 +687,22 @@ class CustomerManagement extends ServiceAbstract
             $searchCriteria = $this->getSearchCriteria();
         }
         $this->getSearchResult()->setSearchCriteria($searchCriteria);
-        $customerId = $searchCriteria->getData('customerId');
-        $storeId    = $searchCriteria->getData('storeId');
+        $customerId         = $searchCriteria->getData('customerId');
+        $storeId            = $searchCriteria->getData('storeId');
         $usingProductOnline = $searchCriteria->getData('usingProductOnline');
         if (is_null($customerId) || is_null($storeId)) {
             throw new Exception(__("Something wrong! Missing require value"));
+        }
+        $this->registry->unregister('is_connectpos');
+        $this->registry->register('is_connectpos', true);
+
+        $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+        $quote = $objectManager->create('Magento\Quote\Model\Quote')->loadByCustomer($customerId);
+        if ($quote->getData('is_active') === '1') {
+            //$quoteItems=$quote->getAllVisibleItems();
+            $items = $this->orderHistoryManagement->getOrderItemData($quote->getAllItems(), $storeId);
+        }else {
+            $items = [];
         }
 
         $data = [
@@ -669,6 +713,7 @@ class CustomerManagement extends ServiceAbstract
                                                               ->getTotals()
                                                               ->getLifetime(),
             'wishlist'        => $this->wishlistManagement->getWishlistData($customerId, $storeId, $usingProductOnline),
+            'items'           => $items
         ];
 
         if ($this->integrateHelper->isIntegrateRP()
