@@ -70,13 +70,26 @@ class Data
             $customer->setData('id', $customer->getData('entity_id'));
         }
         if ($customer->getData('first_name')) {
-            $customer->setData('firstname', $customer->getData('first_name'));
+            $customer->setData('firstname', mb_convert_case($customer->getData('first_name'), MB_CASE_TITLE, "UTF-8"));
         }
         if ($customer->getData('last_name')) {
-            $customer->setData('lastname', $customer->getData('last_name'));
+            $customer->setData('lastname', mb_convert_case($customer->getData('last_name'), MB_CASE_TITLE, "UTF-8"));
         }
         if ($customer->getData('middle_name')) {
-            $customer->setData('middlename', $customer->getData('middle_name'));
+            $customer->setData('middlename', mb_convert_case($customer->getData('middle_name'), MB_CASE_TITLE, "UTF-8"));
+        }
+        if ($customer->getData('company')) {
+            $customer->setData('company', mb_convert_case($customer->getData('company'), MB_CASE_TITLE, "UTF-8"));
+        }
+        if ($customer->getData('customer_occupation_other_name')) {
+            $customer->setData('customer_occupation_other_name', mb_convert_case($customer->getData('customer_occupation_other_name'), MB_CASE_TITLE, "UTF-8"));
+        }
+        if ($customer->getData('street') && is_array($customer->getData('street'))) {
+            $street = [];
+            foreach ($customer->getData('street') as $key => $value) {
+                $street[$key] = mb_convert_case($value, MB_CASE_TITLE, "UTF-8");
+            }
+            $customer->setData('street', $street);
         }
         if ($customer->getData('customer_group_id')) {
             $customer->setData('group_id', $customer->getData('customer_group_id'));

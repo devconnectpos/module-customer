@@ -14,12 +14,19 @@ use Magento\Sales\Model\Order;
 use SM\Core\Api\Data\CountryRegion;
 use SM\Core\Api\Data\CustomerAddress;
 use SM\Core\Api\Data\CustomerGroup;
+use SM\Core\Api\Data\CustomerOccupation;
 use SM\Core\Api\Data\XCustomer;
 use SM\Core\Model\DataObject;
+use SM\Performance\Helper\RealtimeManager;
 use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Newsletter\Model\SubscriberFactory;
+use Magento\Eav\Model\Config;
+use Magento\Eav\Setup\EavSetupFactory;
+use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
+use Magento\Customer\Model\GroupFactory;
+use Magento\Customer\Model\Customer;
 
 /**
  * Class CustomerManagement
@@ -119,29 +126,27 @@ class CustomerManagement extends ServiceAbstract
      * @var \SM\Sales\Repositories\OrderHistoryManagement
      */
     private $orderHistoryManagement;
+
     /**
-     * CustomerManagement constructor.
-     *
-     * @param \Magento\Framework\App\RequestInterface                          $requestInterface
-     * @param \SM\XRetail\Helper\DataConfig                                    $dataConfig
-     * @param \Magento\Store\Model\StoreManagerInterface                       $storeManager
-     * @param \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory $customerCollectionFactory
-     * @param \Magento\Customer\Model\Config\Share                             $customerConfigShare
-     * @param \Magento\Directory\Model\ResourceModel\Country\CollectionFactory $countryCollectionFactory
-     * @param \Magento\Framework\App\ResourceConnection                        $resource
-     * @param \Magento\Customer\Model\ResourceModel\Group\CollectionFactory    $groupCollectionFactory
-     * @param \Magento\Customer\Model\CustomerFactory                          $customerFactory
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface                $customerRepository
-     * @param \SM\Customer\Helper\Data                                         $customerHelper
-     * @param \Magento\Customer\Api\AddressRepositoryInterface                 $addressRepository
-     * @param \Magento\Customer\Model\AddressFactory                           $addressFactory
-     * @param \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory        $salesCollectionFactory
-     * @param \Magento\Catalog\Model\ProductFactory                            $productFactory
-     * @param \SM\Integrate\Helper\Data                                        $integrateHelperData
-     * @param \SM\Wishlist\Repositories\WishlistManagement                     $wishlistManagement
-     * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory          $customerGridCollection
-     * @param SubscriberFactory                                                $subscriberFactory
+     * @var \Magento\Eav\Model\Config
      */
+    protected $eavConfig;
+    /**
+     * @var \Magento\Eav\Setup\EavSetupFactory
+     */
+    protected $eavSetupFactory;
+    /**
+     * @var \Magento\Catalog\Model\ResourceModel\Eav\Attribute
+     */
+    protected $attributeFactory;
+
+    /**
+     * @var \Magento\Customer\Model\GroupFactory
+     */
+    protected $groupFactory;
+
+    protected $realtimeManager;
+
     public function __construct(
         \Magento\Framework\App\RequestInterface $requestInterface,
         \SM\XRetail\Helper\DataConfig $dataConfig,
@@ -165,7 +170,12 @@ class CustomerManagement extends ServiceAbstract
         SubscriberFactory $subscriberFactory,
         \Magento\Quote\Model\QuoteFactory $quoteFactory,
         \Magento\Framework\Registry $registry,
-        \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement
+        Config $eavConfig,
+        \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement,
+        EavSetupFactory $eavSetupFactory,
+        Attribute $attributeFactory,
+        GroupFactory $groupFactory,
+        RealtimeManager $realtimeManager
     ) {
         $this->customerConfigShare            = $customerConfigShare;
         $this->customerCollectionFactory      = $customerCollectionFactory;
@@ -186,7 +196,12 @@ class CustomerManagement extends ServiceAbstract
         $this->customerGroupManagement        = $customerGroupManagement;
         $this->quoteFactory                   = $quoteFactory;
         $this->orderHistoryManagement         = $orderHistoryManagement;
-        $this->registry                 = $registry;
+        $this->registry                       = $registry;
+        $this->eavConfig                      = $eavConfig;
+        $this->eavSetupFactory                = $eavSetupFactory;
+        $this->attributeFactory               = $attributeFactory;
+        $this->groupFactory                   = $groupFactory;
+        $this->realtimeManager                = $realtimeManager;
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
 
@@ -528,6 +543,20 @@ class CustomerManagement extends ServiceAbstract
         $addressType  = $data->getData('addressType');
         $storeId      = $data->getData('storeId');
 
+        if (!!$customerData['customer_group_id'] &&
+            $customerData['customer_group_id'] === 'other' &&
+            !!$customerData['customer_group_other_name']) {
+            $newCustomerGroupID = $this->createNewCustomerGroup($customerData['customer_group_other_name']);
+            if (!!$newCustomerGroupID) {
+                $customerData['customer_group_id'] = $newCustomerGroupID;
+            }
+        }
+
+        if (!!$customerData['occupation'] &&
+            $customerData['occupation'] !== '7') {
+            $customerData['customer_occupation_other_name'] = '';
+        }
+
         if (is_null($storeId)) {
             throw new Exception("Please define customer store id");
         }
@@ -773,5 +802,114 @@ class CustomerManagement extends ServiceAbstract
                 $checkSubscriber->unsubscribe($email);
             }
         }
+    }
+
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getCustomerOccupationData()
+    {
+        $items      = [];
+        $collection = $this->getCustomerOccupationCollection();
+
+        if ($this->getSearchCriteria()->getData('currentPage') == 1) {
+            foreach ($collection as $occupation) {
+                $oc = new CustomerOccupation();
+
+                $oc->addData(
+                    [
+                        'customer_occupation_id'    => $occupation['value'],
+                        'customer_occupation_label' => $occupation['label']
+                    ]
+                );
+                $items[] = $oc;
+            }
+        }
+
+        return $this->getSearchResult()
+                    ->setSearchCriteria($this->getSearchCriteria())
+                    ->setItems($items)
+                    ->getOutput();
+    }
+
+
+    /**
+     * @return array
+     */
+    protected function getCustomerOccupationCollection()
+    {
+        $options = [];
+
+        $attribute = $this->eavConfig->getAttribute(Customer::ENTITY, 'occupation');
+        if (!!$attribute) {
+            $options = $attribute->getSource()->getAllOptions();
+        }
+
+        return $options;
+    }
+
+    /**
+     * @param $attributeCode
+     *
+     * @return Magento\Catalog\Model\ResourceModel\Eav\Attribute | null
+     */
+    protected function loadAttributeByAttributeCode($attributeCode)
+    {
+        $attributeInfo = $this->attributeFactory->getCollection()
+                                                 ->addFieldToFilter('attribute_code', ['eq' => $attributeCode])
+                                                 ->getFirstItem();
+        if (!$attributeInfo) {
+            return null;
+        }
+        return $attributeInfo;
+    }
+
+    /**
+     * @param $attributeInfo
+     * @param $optionLabel
+     *
+     * @return array
+     */
+    protected function createAttributeOptions($attributeInfo, $optionLabel)
+    {
+        $option                 = [];
+        $option['attribute_id'] = $attributeInfo->getAttributeId();
+        $valueId = strtotime(date('Y-m-d H:i:s'));
+        $option['values'][$valueId][0] = $optionLabel;
+
+        return [$option, $valueId];
+    }
+
+    /**
+     * @param $option
+     */
+    protected function addOptionToAttribute($option)
+    {
+        $eavSetup = $this->eavSetupFactory->create();
+        $eavSetup->addAttributeOption($option);
+    }
+
+    /**
+     * @param $customerGroup
+     *
+     * @return mixed
+     * @throws \Exception
+     */
+    protected function createNewCustomerGroup($customerGroup) {
+        $group = $this->groupFactory->create();
+        $group
+            ->setCode($customerGroup)
+            ->setTaxClassId(3)
+            ->save();
+
+        $this->realtimeManager->trigger(
+            RealtimeManager::CUSTOMER_GROUP,
+            $group->getData('customer_group_id'),
+            RealtimeManager::TYPE_CHANGE_NEW
+        );
+
+        return $group->getData('customer_group_id');
     }
 }
