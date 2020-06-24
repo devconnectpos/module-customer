@@ -10,7 +10,10 @@ use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Customer\Setup\CustomerSetupFactory;
+use Magento\Eav\Model\Entity\Attribute\ScopedAttributeInterface;
 use Magento\Eav\Model\Entity\Attribute\SetFactory as AttributeSetFactory;
+use SM\Customer\Model\Config\Source\Options;
+use Magento\Framework\DB\Ddl\Table;
 
 /**
  * @codeCoverageIgnore
@@ -45,6 +48,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         }
         if (version_compare($context->getVersion(), '0.0.5', '<')) {
             $this->addGuestId();
+        }
+        if (version_compare($context->getVersion(), '0.0.6', '<')) {
+            $this->addOccupationAttribute();
         }
     }
 
@@ -206,5 +212,93 @@ class UpgradeSchema implements UpgradeSchemaInterface
                                    );
 
         $attribute->save();
+    }
+
+    protected function addOccupationAttribute()
+    {
+        /** @var CustomerSetup $customerSetup */
+        $customerSetup = $this->customerSetupFactory->create();
+
+        $customerEntity = $customerSetup->getEavConfig()->getEntityType('customer');
+        $attributeSetId = $customerEntity->getDefaultAttributeSetId();
+
+        /** @var $attributeSet AttributeSet */
+        $attributeSet     = $this->attributeSetFactory->create();
+        $attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
+
+        $customerSetup->addAttribute(
+            Customer::ENTITY,
+            'occupation',
+            [
+                'input'                      => 'select',
+                'type'                       => 'int',
+                'label'                      => 'Occupation',
+                'required'                   => false,
+                'visible'                    => true,
+                'user_defined'               => true,
+                'sort_order'                 => 1000,
+                'position'                   => 1000,
+                'system'                     => 0,
+                'searchable'                 => false,
+                'filterable'                 => false,
+                'comparable'                 => false,
+                'visible_on_front'           => false,
+                'visible_in_advanced_search' => false,
+                'is_html_allowed_on_front'   => false,
+                'used_for_promo_rules'       => true,
+                'source'                     => Options::class,
+                'frontend_class'             => '',
+                'global'                     => ScopedAttributeInterface::SCOPE_GLOBAL,
+                'unique'                     => false,
+            ]
+        );
+
+        $attributeOccupation = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'occupation')
+                                   ->addData(
+                                       [
+                                           'attribute_set_id'   => $attributeSetId,
+                                           'attribute_group_id' => $attributeGroupId,
+                                           'used_in_forms'      => ['adminhtml_customer'],
+                                       ]
+                                   );
+
+        $attributeOccupation->save();
+
+        $customerSetup->addAttribute(
+            Customer::ENTITY,
+            'customer_occupation_other_name',
+            [
+                'type'                       => Table::TYPE_TEXT,
+                'label'                      => 'Occupation Name',
+                'length'                     => 255,
+                'required'                   => false,
+                'visible'                    => true,
+                'user_defined'               => true,
+                'sort_order'                 => 1000,
+                'position'                   => 1000,
+                'system'                     => 0,
+                'searchable'                 => false,
+                'filterable'                 => false,
+                'comparable'                 => false,
+                'visible_on_front'           => false,
+                'visible_in_advanced_search' => false,
+                'is_html_allowed_on_front'   => false,
+                'used_for_promo_rules'       => true,
+                'frontend_class'             => '',
+                'global'                     => ScopedAttributeInterface::SCOPE_GLOBAL,
+                'unique'                     => false,
+            ]
+        );
+
+        $attributeOccupationName = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'customer_occupation_other_name')
+                                   ->addData(
+                                       [
+                                           'attribute_set_id'   => $attributeSetId,
+                                           'attribute_group_id' => $attributeGroupId,
+                                           'used_in_forms'      => ['adminhtml_customer'],
+                                       ]
+                                   );
+
+        $attributeOccupationName->save();
     }
 }
