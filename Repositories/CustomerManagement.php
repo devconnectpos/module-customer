@@ -557,6 +557,14 @@ class CustomerManagement extends ServiceAbstract
             $customerData['customer_occupation_other_name'] = '';
         }
 
+        if (!!$customerData['birthday'] && isset($customerData['birthday']['data_date'])) {
+            list($month, $date, $year) = explode('/', $customerData['birthday']['data_date']);
+
+            $birthday = date('Y-m-d', strtotime("$year-$month-$date"));
+
+            $customerData['dob'] = $birthday;
+        }
+
         if (is_null($storeId)) {
             throw new Exception("Please define customer store id");
         }
