@@ -6,6 +6,7 @@
 namespace SM\Customer\Setup;
 
 use Magento\Customer\Model\Customer;
+use Magento\Framework\Exception\LocalizedException;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
@@ -20,22 +21,39 @@ class UpgradeSchema implements UpgradeSchemaInterface
 
     protected $customerSetupFactory;
     protected $attributeSetFactory;
+    /**
+     * @var \Magento\Framework\App\State
+     */
+    private $state;
 
+    /**
+     * UpgradeSchema constructor.
+     * @param CustomerSetupFactory $customerSetupFactory
+     * @param AttributeSetFactory $attributeSetFactory
+     * @param \Magento\Framework\App\State $state
+     */
     public function __construct(
         CustomerSetupFactory $customerSetupFactory,
-        AttributeSetFactory $attributeSetFactory
+        AttributeSetFactory $attributeSetFactory,
+        \Magento\Framework\App\State $state
     ) {
         $this->customerSetupFactory = $customerSetupFactory;
         $this->attributeSetFactory  = $attributeSetFactory;
+	    try {
+		    $state->setAreaCode(\Magento\Framework\App\Area::AREA_ADMINHTML);
+	    } catch (LocalizedException $e) {
+	    }
     }
 
     /**
      * {@inheritdoc}
+     * @throws \Magento\Framework\Exception\LocalizedException
      */
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
         $installer = $setup;
         $installer->startSetup();
+
         if (version_compare($context->getVersion(), '0.0.2', '<')) {
             $this->addPhoneAttribute();
         }
