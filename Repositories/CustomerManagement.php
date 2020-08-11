@@ -1,9 +1,4 @@
 <?php
-/**
- * Created by mr.vjcspy@gmail.com - khoild@smartosc.com.
- * Date: 24/10/2016
- * Time: 15:22
- */
 
 namespace SM\Customer\Repositories;
 
@@ -21,11 +16,6 @@ use SM\XRetail\Repositories\Contract\ServiceAbstract;
 use Magento\Catalog\Model\ProductFactory;
 use Magento\Newsletter\Model\SubscriberFactory;
 
-/**
- * Class CustomerManagement
- *
- * @package SM\Customer\Repositories
- */
 class CustomerManagement extends ServiceAbstract
 {
     /**
@@ -69,6 +59,10 @@ class CustomerManagement extends ServiceAbstract
      */
     protected $addressFactory;
     /**
+     * @var \Magento\Customer\Api\AccountManagementInterface
+     */
+    protected $accountManagement;
+    /**
      * @var \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory
      */
     private $customerCollectionFactory;
@@ -76,12 +70,10 @@ class CustomerManagement extends ServiceAbstract
      * @var \Magento\Customer\Model\Config\Share
      */
     private $customerConfigShare;
-
     /**
      * @var \Magento\Catalog\Model\Product
      */
     protected $productFactory;
-
     /**
      * @var \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory
      */
@@ -94,53 +86,55 @@ class CustomerManagement extends ServiceAbstract
      * @var \SM\Wishlist\Repositories\WishlistManagement
      */
     private $wishlistManagement;
-
     /**
      * @var \SM\Customer\Model\ResourceModel\Grid\CollectionFactory
      */
     private $customerGridCollectionFactory;
-
     /**
      *
      * @var \Magento\Newsletter\Model\Subscriber
      */
     private $subscriberFactory;
-
     /**
      * @var \Magento\Customer\Api\GroupManagementInterface
      */
     protected $customerGroupManagement;
-
+    /**
+     * @var \Magento\Quote\Model\QuoteFactory
+     */
     protected $quoteFactory;
-
-    protected $quoteModel;
-
     /**
      * @var \SM\Sales\Repositories\OrderHistoryManagement
      */
     private $orderHistoryManagement;
+    
     /**
      * CustomerManagement constructor.
      *
-     * @param \Magento\Framework\App\RequestInterface                          $requestInterface
-     * @param \SM\XRetail\Helper\DataConfig                                    $dataConfig
-     * @param \Magento\Store\Model\StoreManagerInterface                       $storeManager
+     * @param \Magento\Framework\App\RequestInterface $requestInterface
+     * @param \SM\XRetail\Helper\DataConfig $dataConfig
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory $customerCollectionFactory
-     * @param \Magento\Customer\Model\Config\Share                             $customerConfigShare
+     * @param \Magento\Customer\Model\Config\Share $customerConfigShare
      * @param \Magento\Directory\Model\ResourceModel\Country\CollectionFactory $countryCollectionFactory
-     * @param \Magento\Framework\App\ResourceConnection                        $resource
-     * @param \Magento\Customer\Model\ResourceModel\Group\CollectionFactory    $groupCollectionFactory
-     * @param \Magento\Customer\Model\CustomerFactory                          $customerFactory
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface                $customerRepository
-     * @param \SM\Customer\Helper\Data                                         $customerHelper
-     * @param \Magento\Customer\Api\AddressRepositoryInterface                 $addressRepository
-     * @param \Magento\Customer\Model\AddressFactory                           $addressFactory
-     * @param \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory        $salesCollectionFactory
-     * @param \Magento\Catalog\Model\ProductFactory                            $productFactory
-     * @param \SM\Integrate\Helper\Data                                        $integrateHelperData
-     * @param \SM\Wishlist\Repositories\WishlistManagement                     $wishlistManagement
-     * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory          $customerGridCollection
-     * @param SubscriberFactory                                                $subscriberFactory
+     * @param \Magento\Framework\App\ResourceConnection $resource
+     * @param \Magento\Customer\Model\ResourceModel\Group\CollectionFactory $groupCollectionFactory
+     * @param \Magento\Customer\Model\CustomerFactory $customerFactory
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+     * @param \SM\Customer\Helper\Data $customerHelper
+     * @param \Magento\Customer\Api\AddressRepositoryInterface $addressRepository
+     * @param \Magento\Customer\Model\AddressFactory $addressFactory
+     * @param \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory $salesCollectionFactory
+     * @param \Magento\Catalog\Model\ProductFactory $productFactory
+     * @param \SM\Integrate\Helper\Data $integrateHelperData
+     * @param \SM\Wishlist\Repositories\WishlistManagement $wishlistManagement
+     * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory $customerGridCollection
+     * @param \Magento\Customer\Api\GroupManagementInterface $customerGroupManagement
+     * @param SubscriberFactory $subscriberFactory
+     * @param \Magento\Quote\Model\QuoteFactory $quoteFactory
+     * @param \Magento\Framework\Registry $registry
+     * @param \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement
+     * @param \Magento\Customer\Api\AccountManagementInterface $accountManagement
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $requestInterface,
@@ -165,7 +159,8 @@ class CustomerManagement extends ServiceAbstract
         SubscriberFactory $subscriberFactory,
         \Magento\Quote\Model\QuoteFactory $quoteFactory,
         \Magento\Framework\Registry $registry,
-        \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement
+        \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement,
+        \Magento\Customer\Api\AccountManagementInterface $accountManagement
     ) {
         $this->customerConfigShare            = $customerConfigShare;
         $this->customerCollectionFactory      = $customerCollectionFactory;
@@ -186,7 +181,8 @@ class CustomerManagement extends ServiceAbstract
         $this->customerGroupManagement        = $customerGroupManagement;
         $this->quoteFactory                   = $quoteFactory;
         $this->orderHistoryManagement         = $orderHistoryManagement;
-        $this->registry                 = $registry;
+        $this->registry                       = $registry;
+        $this->accountManagement              = $accountManagement;
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
 
@@ -238,7 +234,8 @@ class CustomerManagement extends ServiceAbstract
                                                                               ->getCurrentIntegrateModel()
                                                                               ->getCurrentPointBalance(
                                                                                   $customerModel->getEntityId(),
-                                                                                  $this->storeManager->getStore($searchCriteria['storeId'])->getWebsiteId()));
+                                                                                  $this->storeManager->getStore($searchCriteria['storeId'])->getWebsiteId()
+                                                                              ));
                 }
 
                 $customers[] = $customer;
@@ -277,7 +274,7 @@ class CustomerManagement extends ServiceAbstract
             $collection->addFieldToFilter('entity_id', ['in' => $searchCriteria->getData('ids')]);
         }
         if ($searchCriteria->getData('entity_id') || $searchCriteria->getData('entityId')) {
-            if (is_null($searchCriteria->getData('entity_id'))) {
+            if ($searchCriteria->getData('entity_id') === null) {
                 $ids = $searchCriteria->getData('entityId');
             } else {
                 $ids = $searchCriteria->getData('entity_id');
@@ -579,12 +576,8 @@ class CustomerManagement extends ServiceAbstract
             } elseif ($addressType === 'shipping') {
                 throw new Exception("Please define customer when save shipping address");
             } else {
-                $customer = $customer->addData($customerData->getData())
-                                     ->save();
-                try {
-                    $customer->sendNewAccountEmail('confirmed', '', $storeId);
-                } catch (Exception $e) {
-                }
+                $customer = $customer->addData($customerData->getData());
+                $customer = $this->accountManagement->createAccount($customer->getDataModel());
             }
 
             if ($addressData && $customer->getId()) {
@@ -701,7 +694,7 @@ class CustomerManagement extends ServiceAbstract
         if ($quote->getData('is_active') === '1') {
             //$quoteItems=$quote->getAllVisibleItems();
             $items = $this->orderHistoryManagement->getOrderItemData($quote->getAllItems(), $storeId);
-        }else {
+        } else {
             $items = [];
         }
 
@@ -760,7 +753,8 @@ class CustomerManagement extends ServiceAbstract
         return $this->productFactory->create();
     }
 
-    public function saveSub() {
+    public function saveSub()
+    {
         $data = $this->getRequestData();
 
         $email = $data->getData('email');
