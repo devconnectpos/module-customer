@@ -120,6 +120,9 @@ class Data
         if ($customer->getData('guest_id')) {
             $customer->setData('retail_guest_id', $customer->getData('guest_id'));
         }
+        if ($customer->getData('scg_customer_group')) {
+            $customer->setData('scg_customer_group', (int) $customer->getData('scg_customer_group'));
+        }
 
         return $customer;
     }

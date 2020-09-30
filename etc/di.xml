@@ -1,4 +1,20 @@
 <?xml version="1.0"?>
 <config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:ObjectManager/etc/config.xsd">
+    <preference for="SM\Customer\Api\Data\ScgCustomerGroupInterface" type="SM\Customer\Model\ScgCustomerGroup" />
     <preference for="Magento\Quote\Model\ResourceModel\Quote" type="SM\Customer\Model\ResourceModel\Quote" />
+
+    <type name="Magento\Framework\View\Element\UiComponent\DataProvider\CollectionFactory">
+        <arguments>
+            <argument name="collections" xsi:type="array">
+                <item name="smcustomer_scg_customer_group_listing_data_source" xsi:type="string">SM\Customer\Model\ResourceModel\ScgCustomerGroup\Grid\Collection</item>
+            </argument>
+        </arguments>
+    </type>
+
+    <virtualType name="SM\Customer\Model\ResourceModel\ScgCustomerGroup\Grid\Collection" type="Magento\Framework\View\Element\UiComponent\DataProvider\SearchResult">
+        <arguments>
+            <argument name="mainTable" xsi:type="string">cpos_scg_customer_group</argument>
+            <argument name="resourceModel" xsi:type="string">SM\Customer\Model\ResourceModel\ScgCustomerGroup</argument>
+        </arguments>
+    </virtualType>
 </config>

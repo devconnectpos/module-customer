@@ -8,25 +8,26 @@
 namespace SM\Customer\Repositories;
 
 use Exception;
+use Magento\Catalog\Model\ProductFactory;
+use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
+use Magento\Customer\Model\Customer;
+use Magento\Customer\Model\GroupFactory;
+use Magento\Eav\Model\Config;
+use Magento\Eav\Setup\EavSetupFactory;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order;
 use SM\Core\Api\Data\CountryRegion;
 use SM\Core\Api\Data\CustomerAddress;
 use SM\Core\Api\Data\CustomerGroup;
 use SM\Core\Api\Data\CustomerOccupation;
+use SM\Core\Api\Data\ScgCustomerGroup;
 use SM\Core\Api\Data\XCustomer;
 use SM\Core\Model\DataObject;
 use SM\Performance\Helper\RealtimeManager;
 use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
-use Magento\Catalog\Model\ProductFactory;
-use Magento\Newsletter\Model\SubscriberFactory;
-use Magento\Eav\Model\Config;
-use Magento\Eav\Setup\EavSetupFactory;
-use Magento\Catalog\Model\ResourceModel\Eav\Attribute;
-use Magento\Customer\Model\GroupFactory;
-use Magento\Customer\Model\Customer;
 
 /**
  * Class CustomerManagement
@@ -253,17 +254,36 @@ class CustomerManagement extends ServiceAbstract
                                                                               ->getCurrentIntegrateModel()
                                                                               ->getCurrentPointBalance(
                                                                                   $customerModel->getEntityId(),
-                                                                                  $this->storeManager->getStore($searchCriteria['storeId'])->getWebsiteId()));
+                                                                                  $this->storeManager->getStore($searchCriteria['storeId'])->getWebsiteId()
+                                                                              ));
                 }
+                $customer->setData('scg_customer_group_name', $this->getScgCustomerGroup($customer->getData('scg_customer_group')));
 
                 $customers[] = $customer;
             }
-
         }
         return $this->getSearchResult()
                     ->setItems($customers)
                     ->setLastPageNumber($collection->getLastPageNumber())
                     ->setTotalCount($collection->getSize());
+    }
+
+    /**
+     * @param null $groupId
+     * @return array|false
+     * @throws LocalizedException
+     */
+    protected function getScgCustomerGroup($groupId = null)
+    {
+        $attribute = $this->eavConfig->getAttribute(Customer::ENTITY, 'scg_customer_group');
+        if (!$attribute) {
+            return false;
+        }
+        if ($groupId) {
+            return $attribute->getSource()->getOptionText($groupId);
+        }
+
+        return $attribute->getSource()->toOptionArray();
     }
 
     /**
@@ -542,6 +562,8 @@ class CustomerManagement extends ServiceAbstract
         $addressData  = $data->getData('address') ? new DataObject($data->getData('address')) : null;
         $addressType  = $data->getData('addressType');
         $storeId      = $data->getData('storeId');
+        
+        $this->validateTelephoneNumber($data);
 
         if (!!$customerData['customer_group_id'] &&
             $customerData['customer_group_id'] === 'other' &&
@@ -654,8 +676,6 @@ class CustomerManagement extends ServiceAbstract
                     $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
                 }
             }
-
-
         } catch (AlreadyExistsException $e) {
             throw new Exception(
                 __('A customer with the same email already exists in an associated website.')
@@ -738,7 +758,7 @@ class CustomerManagement extends ServiceAbstract
         if ($quote->getData('is_active') === '1') {
             //$quoteItems=$quote->getAllVisibleItems();
             $items = $this->orderHistoryManagement->getOrderItemData($quote->getAllItems(), $storeId);
-        }else {
+        } else {
             $items = [];
         }
 
@@ -797,7 +817,12 @@ class CustomerManagement extends ServiceAbstract
         return $this->productFactory->create();
     }
 
-    public function saveSub() {
+    /**
+     * @throws LocalizedException
+     * @throws Exception
+     */
+    public function saveSub()
+    {
         $data = $this->getRequestData();
 
         $email = $data->getData('email');
@@ -811,7 +836,6 @@ class CustomerManagement extends ServiceAbstract
             }
         }
     }
-
 
     /**
      * @return array
@@ -842,6 +866,33 @@ class CustomerManagement extends ServiceAbstract
                     ->getOutput();
     }
 
+    /**
+     * @return array
+     * @throws LocalizedException
+     * @throws \ReflectionException
+     * @throws \Exception
+     */
+    public function getScgCustomerGroupData()
+    {
+        $items      = [];
+        $groups = $this->getScgCustomerGroup();
+
+        if ((int) $this->getSearchCriteria()->getData('currentPage') === 1) {
+            foreach ($groups as $group) {
+                $scgGroup = new ScgCustomerGroup();
+                $scgGroup->addData([
+                    'scg_customer_group_id'    => $group['value'],
+                    'scg_customer_group_label' => $group['label']
+                ]);
+                $items[] = $scgGroup;
+            }
+        }
+
+        return $this->getSearchResult()
+            ->setSearchCriteria($this->getSearchCriteria())
+            ->setItems($items)
+            ->getOutput();
+    }
 
     /**
      * @return array
@@ -905,7 +956,8 @@ class CustomerManagement extends ServiceAbstract
      * @return mixed
      * @throws \Exception
      */
-    protected function createNewCustomerGroup($customerGroup) {
+    protected function createNewCustomerGroup($customerGroup)
+    {
         $group = $this->groupFactory->create();
         $group
             ->setCode($customerGroup)
@@ -919,5 +971,23 @@ class CustomerManagement extends ServiceAbstract
         );
 
         return $group->getData('customer_group_id');
+    }
+
+    /**
+     * @param DataObject $data
+     * @throws AlreadyExistsException
+     */
+    protected function validateTelephoneNumber(DataObject $data)
+    {
+        $telephone = $data->getData('customer')['telephone'];
+        $collection = $this->customerCollectionFactory->create()->addFieldToFilter('retail_telephone', ['eq' => $telephone]);
+
+        if (isset($data->getData('customer')['id']) && $data->getData('customer')['id']) {
+            $collection->addFieldToFilter('entity_id', ['neq' => $data->getData('customer')['id']]);
+        }
+
+        if ($collection->getSize() > 0) {
+            throw new AlreadyExistsException(__('A customer with the same telephone already exists.'));
+        }
     }
 }

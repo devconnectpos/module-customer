@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:module:Magento_Backend:etc/menu.xsd">
+    <menu>
+        <add id="SM_Customer::scg_customer_group"
+             title="SCG Customer Groups"
+             translate="title"
+             module="SM_Customer"
+             sortOrder="60"
+             parent="Magento_Customer::customer"
+             action="smcustomer/group"
+             resource="SM_Customer::scg_customer_group"/>
+    </menu>
+</config>
