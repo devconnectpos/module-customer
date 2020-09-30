@@ -1,0 +1,14 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Acl/etc/acl.xsd">
+    <acl>
+        <resources>
+            <resource id="Magento_Backend::admin">
+            <resource id="Magento_Customer::customer" title="Customers" translate="title" sortOrder="40">
+                <resource id="SM_Customer::customer" title="SM Customers" translate="title" sortOrder="100">
+                    <resource id="SM_Customer::scg_customer_group" title="SCG Customer Groups" translate="title" sortOrder="10" />
+                </resource>
+            </resource>
+            </resource>
+        </resources>
+    </acl>
+</config>

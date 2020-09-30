@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<config xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="urn:magento:framework:Event/etc/events.xsd">
+    <event name="cpos_scg_customer_group_delete_before">
+        <observer name="reset_scg_customer_group" instance="SM\Customer\Observer\ResetScgCustomerGroup"/>
+    </event>
+</config>

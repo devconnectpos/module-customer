@@ -20,10 +20,21 @@ use Magento\Framework\DB\Ddl\Table;
  */
 class UpgradeSchema implements UpgradeSchemaInterface
 {
-
+    /**
+     * @var CustomerSetupFactory
+     */
     protected $customerSetupFactory;
+
+    /**
+     * @var AttributeSetFactory
+     */
     protected $attributeSetFactory;
 
+    /**
+     * UpgradeSchema constructor.
+     * @param CustomerSetupFactory $customerSetupFactory
+     * @param AttributeSetFactory $attributeSetFactory
+     */
     public function __construct(
         CustomerSetupFactory $customerSetupFactory,
         AttributeSetFactory $attributeSetFactory
@@ -33,7 +44,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
     }
 
     /**
-     * {@inheritdoc}
+     * @param SchemaSetupInterface $setup
+     * @param ModuleContextInterface $context
+     * @throws \Zend_Db_Exception
      */
     public function upgrade(SchemaSetupInterface $setup, ModuleContextInterface $context)
     {
@@ -51,6 +64,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
         }
         if (version_compare($context->getVersion(), '0.0.6', '<')) {
             $this->addOccupationAttribute();
+        }
+        if (version_compare($context->getVersion(), '0.0.7', '<')) {
+            $this->addScgCustomerGroup($setup);
         }
     }
 
@@ -300,5 +316,61 @@ class UpgradeSchema implements UpgradeSchemaInterface
                                    );
 
         $attributeOccupationName->save();
+    }
+
+    /**
+     * @param SchemaSetupInterface $setup
+     * @throws \Zend_Db_Exception
+     */
+    protected function addScgCustomerGroup($setup) {
+        $connection = $setup->getConnection();
+        $scgCustomerGroupTable = $setup->getTable('cpos_scg_customer_group');
+        if (!$connection->isTableExists($scgCustomerGroupTable)) {
+            $priceHistoryReportTable = $connection->newTable($scgCustomerGroupTable)
+                ->addColumn(
+                    'entity_id',
+                    Table::TYPE_INTEGER,
+                    null,
+                    [
+                        'identity' => true,
+                        'unsigned' => true,
+                        'nullable' => false,
+                        'primary' => true
+                    ],
+                    'SCG Customer Group ID'
+                )->addColumn(
+                    'name',
+                    Table::TYPE_TEXT,
+                    255,
+                    ['nullable' => false,],
+                    'SCG Customer Group Name'
+                )->addColumn(
+                    'note',
+                    Table::TYPE_TEXT,
+                    '2M',
+                    ['nullable' => true,],
+                    'SCG Customer Group Note'
+                )->addColumn(
+                    'created_at',
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => true,
+                        'default'  => Table::TIMESTAMP_INIT
+                    ],
+                    'Entity Created At'
+                )->addColumn(
+                    'updated_at',
+                    Table::TYPE_TIMESTAMP,
+                    null,
+                    [
+                        'nullable' => true,
+                        'default'  => Table::TIMESTAMP_INIT_UPDATE
+                    ],
+                    'Entity Updated At'
+                );
+            $connection->createTable($priceHistoryReportTable);
+        }
+
     }
 }
