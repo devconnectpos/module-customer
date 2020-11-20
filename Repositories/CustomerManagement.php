@@ -107,34 +107,34 @@ class CustomerManagement extends ServiceAbstract
      * @var \SM\Sales\Repositories\OrderHistoryManagement
      */
     private $orderHistoryManagement;
-    
+
     /**
      * CustomerManagement constructor.
      *
-     * @param \Magento\Framework\App\RequestInterface $requestInterface
-     * @param \SM\XRetail\Helper\DataConfig $dataConfig
-     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
+     * @param \Magento\Framework\App\RequestInterface                          $requestInterface
+     * @param \SM\XRetail\Helper\DataConfig                                    $dataConfig
+     * @param \Magento\Store\Model\StoreManagerInterface                       $storeManager
      * @param \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory $customerCollectionFactory
-     * @param \Magento\Customer\Model\Config\Share $customerConfigShare
+     * @param \Magento\Customer\Model\Config\Share                             $customerConfigShare
      * @param \Magento\Directory\Model\ResourceModel\Country\CollectionFactory $countryCollectionFactory
-     * @param \Magento\Framework\App\ResourceConnection $resource
-     * @param \Magento\Customer\Model\ResourceModel\Group\CollectionFactory $groupCollectionFactory
-     * @param \Magento\Customer\Model\CustomerFactory $customerFactory
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
-     * @param \SM\Customer\Helper\Data $customerHelper
-     * @param \Magento\Customer\Api\AddressRepositoryInterface $addressRepository
-     * @param \Magento\Customer\Model\AddressFactory $addressFactory
-     * @param \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory $salesCollectionFactory
-     * @param \Magento\Catalog\Model\ProductFactory $productFactory
-     * @param \SM\Integrate\Helper\Data $integrateHelperData
-     * @param \SM\Wishlist\Repositories\WishlistManagement $wishlistManagement
-     * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory $customerGridCollection
-     * @param \Magento\Customer\Api\GroupManagementInterface $customerGroupManagement
-     * @param SubscriberFactory $subscriberFactory
-     * @param \Magento\Quote\Model\QuoteFactory $quoteFactory
-     * @param \Magento\Framework\Registry $registry
-     * @param \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement
-     * @param \Magento\Customer\Api\AccountManagementInterface $accountManagement
+     * @param \Magento\Framework\App\ResourceConnection                        $resource
+     * @param \Magento\Customer\Model\ResourceModel\Group\CollectionFactory    $groupCollectionFactory
+     * @param \Magento\Customer\Model\CustomerFactory                          $customerFactory
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface                $customerRepository
+     * @param \SM\Customer\Helper\Data                                         $customerHelper
+     * @param \Magento\Customer\Api\AddressRepositoryInterface                 $addressRepository
+     * @param \Magento\Customer\Model\AddressFactory                           $addressFactory
+     * @param \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory        $salesCollectionFactory
+     * @param \Magento\Catalog\Model\ProductFactory                            $productFactory
+     * @param \SM\Integrate\Helper\Data                                        $integrateHelperData
+     * @param \SM\Wishlist\Repositories\WishlistManagement                     $wishlistManagement
+     * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory          $customerGridCollection
+     * @param \Magento\Customer\Api\GroupManagementInterface                   $customerGroupManagement
+     * @param SubscriberFactory                                                $subscriberFactory
+     * @param \Magento\Quote\Model\QuoteFactory                                $quoteFactory
+     * @param \Magento\Framework\Registry                                      $registry
+     * @param \SM\Sales\Repositories\OrderHistoryManagement                    $orderHistoryManagement
+     * @param \Magento\Customer\Api\AccountManagementInterface                 $accountManagement
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $requestInterface,
@@ -162,27 +162,27 @@ class CustomerManagement extends ServiceAbstract
         \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement,
         \Magento\Customer\Api\AccountManagementInterface $accountManagement
     ) {
-        $this->customerConfigShare            = $customerConfigShare;
-        $this->customerCollectionFactory      = $customerCollectionFactory;
-        $this->countryCollection              = $countryCollectionFactory;
-        $this->resource                       = $resource;
+        $this->customerConfigShare = $customerConfigShare;
+        $this->customerCollectionFactory = $customerCollectionFactory;
+        $this->countryCollection = $countryCollectionFactory;
+        $this->resource = $resource;
         $this->customerGroupCollectionFactory = $groupCollectionFactory;
-        $this->customerFactory                = $customerFactory;
-        $this->customerRepository             = $customerRepository;
-        $this->customerHelper                 = $customerHelper;
-        $this->addressRepository              = $addressRepository;
-        $this->addressFactory                 = $addressFactory;
-        $this->productFactory                 = $productFactory;
-        $this->salesCollectionFactory         = $salesCollectionFactory;
-        $this->integrateHelper                = $integrateHelperData;
-        $this->wishlistManagement             = $wishlistManagement;
-        $this->customerGridCollectionFactory  = $customerGridCollection;
-        $this->subscriberFactory              = $subscriberFactory;
-        $this->customerGroupManagement        = $customerGroupManagement;
-        $this->quoteFactory                   = $quoteFactory;
-        $this->orderHistoryManagement         = $orderHistoryManagement;
-        $this->registry                       = $registry;
-        $this->accountManagement              = $accountManagement;
+        $this->customerFactory = $customerFactory;
+        $this->customerRepository = $customerRepository;
+        $this->customerHelper = $customerHelper;
+        $this->addressRepository = $addressRepository;
+        $this->addressFactory = $addressFactory;
+        $this->productFactory = $productFactory;
+        $this->salesCollectionFactory = $salesCollectionFactory;
+        $this->integrateHelper = $integrateHelperData;
+        $this->wishlistManagement = $wishlistManagement;
+        $this->customerGridCollectionFactory = $customerGridCollection;
+        $this->subscriberFactory = $subscriberFactory;
+        $this->customerGroupManagement = $customerGroupManagement;
+        $this->quoteFactory = $quoteFactory;
+        $this->orderHistoryManagement = $orderHistoryManagement;
+        $this->registry = $registry;
+        $this->accountManagement = $accountManagement;
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
 
@@ -229,23 +229,25 @@ class CustomerManagement extends ServiceAbstract
                     $customer->setData('subscription', false);
                 }
 
-                if ($this->integrateHelper->isIntegrateRP() && $this->integrateHelper->isAHWRewardPoints()) {
-                    $customer->setData('reward_point', $this->integrateHelper->getRpIntegrateManagement()
-                                                                              ->getCurrentIntegrateModel()
-                                                                              ->getCurrentPointBalance(
-                                                                                  $customerModel->getEntityId(),
-                                                                                  $this->storeManager->getStore($searchCriteria['storeId'])->getWebsiteId()
-                                                                              ));
+                $thirdPartyRP = $this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints();
+                if ($this->integrateHelper->isIntegrateRP() && $thirdPartyRP) {
+                    $rewardPoints = $this->integrateHelper->getRpIntegrateManagement()
+                        ->getCurrentIntegrateModel()
+                        ->getCurrentPointBalance(
+                            $customerModel->getEntityId(),
+                            $this->storeManager->getStore($searchCriteria['storeId'])->getWebsiteId()
+                        );
+                    $customer->setData('reward_point', $rewardPoints);
                 }
 
                 $customers[] = $customer;
             }
-
         }
+
         return $this->getSearchResult()
-                    ->setItems($customers)
-                    ->setLastPageNumber($collection->getLastPageNumber())
-                    ->setTotalCount($collection->getSize());
+            ->setItems($customers)
+            ->setLastPageNumber($collection->getLastPageNumber())
+            ->setTotalCount($collection->getSize());
     }
 
     /**
@@ -290,23 +292,23 @@ class CustomerManagement extends ServiceAbstract
             foreach (explode(",", $searchField) as $field) {
                 if ($field === 'first_name' || $field === 'last_name') {
                     $_fieldFilters[] = "name";
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'telephone') {
                     $_fieldFilters[] = 'billing_telephone';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'id') {
                     $_fieldFilters  [] = 'entity_id';
-                    $_valueFilters[]   = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'postcode') {
                     $_fieldFilters[] = 'billing_postcode';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'email') {
                     $_fieldFilters  [] = 'email';
-                    $_valueFilters[]   = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 }
             }
             $_fieldFilters = array_unique($_fieldFilters);
@@ -355,12 +357,12 @@ class CustomerManagement extends ServiceAbstract
      */
     protected function getAddressData(\Magento\Customer\Model\Address $address)
     {
-        $addData           = $address->getData();
+        $addData = $address->getData();
         $addData['first_name'] = $addData['firstname'];
         $addData['last_name'] = $addData['lastname'];
         $addData['street'] = $address->getStreet();
         $addData['company'] = is_null($address->getCompany()) ? '' : $address->getCompany();
-        $_customerAdd      = new CustomerAddress($addData);
+        $_customerAdd = new CustomerAddress($addData);
 
         return $_customerAdd->getOutput();
     }
@@ -372,14 +374,14 @@ class CustomerManagement extends ServiceAbstract
      */
     public function getCountryRegionData()
     {
-        $items      = [];
+        $items = [];
         $collection = $this->getCountryCollection($this->getSearchCriteria());
         if ($collection->getLastPageNumber() < $this->getSearchCriteria()->getData('currentPage')) {
         } else {
             foreach ($collection as $country) {
                 /** @var \Magento\Directory\Model\Country $country */
                 $regionCollection = $country->getRegionCollection();
-                $regions          = [];
+                $regions = [];
                 foreach ($regionCollection as $region) {
                     $regions[] = $region->getData();
                 }
@@ -388,7 +390,7 @@ class CustomerManagement extends ServiceAbstract
                     [
                         'country_id' => $country->getCountryId(),
                         'name'       => $country->getName(),
-                        'regions'    => $regions
+                        'regions'    => $regions,
                     ]
                 );
                 $items[] = $countryRegion;
@@ -396,9 +398,9 @@ class CustomerManagement extends ServiceAbstract
         }
 
         return $this->getSearchResult()
-                    ->setItems($items)
-                    ->setTotalCount($collection->getSize())
-                    ->getOutput();
+            ->setItems($items)
+            ->setTotalCount($collection->getSize())
+            ->getOutput();
     }
 
     /**
@@ -434,7 +436,7 @@ class CustomerManagement extends ServiceAbstract
      */
     public function getCustomerGroupData()
     {
-        $items      = [];
+        $items = [];
         $collection = $this->getCustomerGroupCollection($this->getSearchCriteria());
         if ($collection->getLastPageNumber() < $this->getSearchCriteria()->getData('currentPage')) {
         } else {
@@ -446,7 +448,7 @@ class CustomerManagement extends ServiceAbstract
                         'customer_group_id'   => $group->getId(),
                         'customer_group_code' => $group->getCode(),
                         'tax_class_id'        => $group->getData('tax_class_id'),
-                        'tax_class_name'      => $group->getTaxClassName()
+                        'tax_class_name'      => $group->getTaxClassName(),
                     ]
                 );
                 $items[] = $g;
@@ -454,10 +456,10 @@ class CustomerManagement extends ServiceAbstract
         }
 
         return $this->getSearchResult()
-                    ->setSearchCriteria($this->getSearchCriteria())
-                    ->setItems($items)
-                    ->setTotalCount($collection->getSize())
-                    ->getOutput();
+            ->setSearchCriteria($this->getSearchCriteria())
+            ->setItems($items)
+            ->setTotalCount($collection->getSize())
+            ->getOutput();
     }
 
     /**
@@ -521,9 +523,9 @@ class CustomerManagement extends ServiceAbstract
         $data = $this->getRequestData();
 
         $customerData = new DataObject($data->getData('customer'));
-        $addressData  = $data->getData('address') ? new DataObject($data->getData('address')) : null;
-        $addressType  = $data->getData('addressType');
-        $storeId      = $data->getData('storeId');
+        $addressData = $data->getData('address') ? new DataObject($data->getData('address')) : null;
+        $addressType = $data->getData('addressType');
+        $storeId = $data->getData('storeId');
 
         if (is_null($storeId)) {
             throw new Exception("Please define customer store id");
@@ -534,7 +536,7 @@ class CustomerManagement extends ServiceAbstract
         if (!$customerData->getId()) {
             try {
                 $checkCustomer = $this->customerRepository->get($customerData->getEmail());
-                $websiteId     = $checkCustomer->getWebsiteId();
+                $websiteId = $checkCustomer->getWebsiteId();
 
                 if ($this->customerHelper->isCustomerInStore($websiteId, $storeId)) {
                     throw new Exception(__('A customer with the same email already exists in an associated website.'));
@@ -568,10 +570,10 @@ class CustomerManagement extends ServiceAbstract
                 if ($customer->getId()) {
                     if ($addressType === 'billing') {
                         $customer->addData($customerData->getData())
-                                 ->save();
+                            ->save();
                     }
                 } else {
-                    throw new Exception("Can't find customer with id: " . $customerData->getId());
+                    throw new Exception("Can't find customer with id: ".$customerData->getId());
                 }
             } elseif ($addressType === 'shipping') {
                 throw new Exception("Please define customer when save shipping address");
@@ -586,14 +588,14 @@ class CustomerManagement extends ServiceAbstract
                 if ($addressData->getId() && $addressData->getId() < 1481282470403) {
                     $addressModel->load($addressData->getId());
                     if (!$addressModel->getId()) {
-                        throw new Exception(__("Can't get address id: " . $addressData->getId()));
+                        throw new Exception(__("Can't get address id: ".$addressData->getId()));
                     }
                 } else {
                     $addressData->setId(null);
                 }
                 $addressModel->addData($addressData->getData())
-                             ->setData('parent_id', $customer->getId())
-                             ->save();
+                    ->setData('parent_id', $customer->getId())
+                    ->save();
 
                 $customer = $this->getCustomerModel()->load($customer->getId());
                 if ($addressType === 'billing') {
@@ -610,8 +612,6 @@ class CustomerManagement extends ServiceAbstract
                     $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
                 }
             }
-
-
         } catch (AlreadyExistsException $e) {
             throw new Exception(
                 __('A customer with the same email already exists in an associated website.')
@@ -623,7 +623,7 @@ class CustomerManagement extends ServiceAbstract
         $searchCriteria = new \Magento\Framework\DataObject(
             [
                 'storeId'   => $storeId,
-                'entity_id' => $customer->getId()
+                'entity_id' => $customer->getId(),
             ]
         );
 
@@ -643,7 +643,7 @@ class CustomerManagement extends ServiceAbstract
         if ($address->getId()) {
             $addressModel->load($address->getId());
             if (!$addressModel->getId()) {
-                throw new Exception(__("Can't get address id: " . $address->getId()));
+                throw new Exception(__("Can't get address id: ".$address->getId()));
             }
         }
         $addressModel->addData($address->getData());
@@ -680,8 +680,8 @@ class CustomerManagement extends ServiceAbstract
             $searchCriteria = $this->getSearchCriteria();
         }
         $this->getSearchResult()->setSearchCriteria($searchCriteria);
-        $customerId         = $searchCriteria->getData('customerId');
-        $storeId            = $searchCriteria->getData('storeId');
+        $customerId = $searchCriteria->getData('customerId');
+        $storeId = $searchCriteria->getData('storeId');
         $usingProductOnline = $searchCriteria->getData('usingProductOnline');
         if (is_null($customerId) || is_null($storeId)) {
             throw new Exception(__("Something wrong! Missing require value"));
@@ -700,17 +700,18 @@ class CustomerManagement extends ServiceAbstract
 
         $data = [
             'life_time_sales' => $this->salesCollectionFactory->create()
-                                                              ->setOrderStateFilter(Order::STATE_COMPLETE, false)
-                                                              ->setCustomerIdFilter($customerId)
-                                                              ->load()
-                                                              ->getTotals()
-                                                              ->getLifetime(),
+                ->setOrderStateFilter(Order::STATE_COMPLETE, false)
+                ->setCustomerIdFilter($customerId)
+                ->load()
+                ->getTotals()
+                ->getLifetime(),
             'wishlist'        => $this->wishlistManagement->getWishlistData($customerId, $storeId, $usingProductOnline),
-            'items'           => $items
+            'items'           => $items,
         ];
 
         if ($this->integrateHelper->isIntegrateRP()
-            && $this->integrateHelper->isAHWRewardPoints()) {
+            && ($this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints())
+        ) {
             $data['rp_point_balance'] = $this->integrateHelper
                 ->getRpIntegrateManagement()
                 ->getCurrentIntegrateModel()
@@ -721,7 +722,8 @@ class CustomerManagement extends ServiceAbstract
         }
 
         if ($this->integrateHelper->isIntegrateRP()
-            && $this->integrateHelper->isRewardPointMagento2EE()) {
+            && $this->integrateHelper->isRewardPointMagento2EE()
+        ) {
             $data['rp_point_balance'] = $this->integrateHelper
                 ->getRpIntegrateManagement()
                 ->getCurrentIntegrateModel()
@@ -732,7 +734,8 @@ class CustomerManagement extends ServiceAbstract
         }
 
         if ($this->integrateHelper->isIntegrateStoreCredit()
-            && $this->integrateHelper->isExistStoreCreditMagento2EE()) {
+            && $this->integrateHelper->isExistStoreCreditMagento2EE()
+        ) {
             $data['store_credit_balance'] = $this->integrateHelper
                 ->getStoreCreditIntegrateManagement()
                 ->getCurrentIntegrateModel()
@@ -758,7 +761,7 @@ class CustomerManagement extends ServiceAbstract
         $data = $this->getRequestData();
 
         $email = $data->getData('email');
-        $isSubscribe  = $data->getData('isSubscribe');
+        $isSubscribe = $data->getData('isSubscribe');
         $checkSubscriber = $this->subscriberFactory->create()->loadByEmail($email);
         if ($isSubscribe) {
             $checkSubscriber->subscribe($email);
