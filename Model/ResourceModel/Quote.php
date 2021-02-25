@@ -6,7 +6,8 @@ namespace SM\Customer\Model\ResourceModel;
 /**
  * Quote resource model
  */
-class Quote extends \Magento\Quote\Model\ResourceModel\Quote {
+class Quote extends \Magento\Quote\Model\ResourceModel\Quote
+{
 
     /**
      * @var \Magento\Framework\Registry
@@ -33,20 +34,21 @@ class Quote extends \Magento\Quote\Model\ResourceModel\Quote {
      *
      * @return $this
      */
-    public function loadByCustomerId($quote, $customerId) {
-        $isConnectPOs  = $this->registry->registry('is_connectpos');
-        $connection    = $this->getConnection();
-        if ($isConnectPOs) {
+    public function loadByCustomerId($quote, $customerId)
+    {
+        $isConnectPOS = $this->registry->registry('is_connectpos');
+        $connection = $this->getConnection();
+        if ($isConnectPOS) {
             $select = $this->_getLoadSelect(
                 'customer_id',
                 $customerId,
                 $quote
             )->order(
-                'created_at ' . \Magento\Framework\DB\Select::SQL_DESC
+                'created_at '.\Magento\Framework\DB\Select::SQL_DESC
             )->limit(
                 1
             );
-        }else {
+        } else {
             $select = $this->_getLoadSelect(
                 'customer_id',
                 $customerId,
@@ -55,14 +57,22 @@ class Quote extends \Magento\Quote\Model\ResourceModel\Quote {
                 'is_active = ?',
                 1
             )->order(
-                'updated_at ' . \Magento\Framework\DB\Select::SQL_DESC
+                'updated_at '.\Magento\Framework\DB\Select::SQL_DESC
             )->limit(
                 1
             );
         }
+
         $data = $connection->fetchRow($select);
+
         if ($data) {
             $quote->setData($data);
+
+            // XRT-6183: Fix issue of Mr's Leather client in which address could not be saved to the address book in frontend
+            // The $isConnectPOS flag is checked as a safe method to make sure original logic is kept when processing the quote through CPOS
+            if (!$isConnectPOS) {
+                $quote->setOrigData();
+            }
         }
 
         $this->_afterLoad($quote);
