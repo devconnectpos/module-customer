@@ -530,6 +530,8 @@ class CustomerManagement extends ServiceAbstract
         if (is_null($storeId)) {
             throw new Exception("Please define customer store id");
         }
+
+        $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
         $this->customerHelper->transformCustomerData($customerData);
 
         // Check email already exists in website
@@ -548,7 +550,6 @@ class CustomerManagement extends ServiceAbstract
 
         // Associate website_id with customer
         if (!$customerData->getWebsiteId()) {
-            $websiteId = $this->storeManager->getStore($storeId)->getWebsiteId();
             $customerData->setWebsiteId($websiteId);
         }
 
@@ -612,11 +613,44 @@ class CustomerManagement extends ServiceAbstract
                     $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
                 }
             }
+
+            if ($this->integrateHelper->isIntegrateStoreCredit()
+                && $this->integrateHelper->isExistStoreCreditMagento2EE()
+                && isset($customerData['store_credit_adjust'])
+                && $customer->getId()
+            ) {
+                $this->integrateHelper
+                    ->getStoreCreditIntegrateManagement()
+                    ->getCurrentIntegrateModel()
+                    ->updateCustomerStoreCreditBalance($customer->getDataModel(), $websiteId, $storeId, $customerData['store_credit_adjust']);
+            }
+
+            if ($this->integrateHelper->isIntegrateRP() &&
+                (($this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints()) || $this->integrateHelper->isRewardPointMagento2EE())
+                && isset($customerData['rp_point_adjust'])
+                && $customer->getId()
+            ) {
+                $this->integrateHelper
+                    ->getRpIntegrateManagement()
+                    ->getCurrentIntegrateModel()
+                    ->updateCustomerCurrentPointBalance(
+                        $customer->getDataModel(),
+                        $websiteId,
+                        $storeId,
+                        $customerData['rp_point_adjust']
+                    );
+            }
+
         } catch (AlreadyExistsException $e) {
             throw new Exception(
                 __('A customer with the same email already exists in an associated website.')
             );
         } catch (LocalizedException $e) {
+            $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/connectpos.log');
+            $logger = new \Zend\Log\Logger();
+            $logger->addWriter($writer);
+            $logger->info('====> Failed to save customer');
+            $logger->info($e->getMessage() . "\n" . $e->getTraceAsString());
             throw $e;
         }
 
