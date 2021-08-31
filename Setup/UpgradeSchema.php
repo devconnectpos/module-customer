@@ -7,22 +7,29 @@
 namespace SM\Customer\Setup;
 
 use Magento\Customer\Model\Customer;
+use Magento\Customer\Setup\CustomerSetup;
+use Magento\Customer\Setup\CustomerSetupFactory;
+use Magento\Eav\Model\Entity\Attribute\Set as AttributeSet;
+use Magento\Eav\Model\Entity\Attribute\SetFactory as AttributeSetFactory;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\LocalizedException;
-use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Magento\Framework\Setup\ModuleContextInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
-use Magento\Customer\Setup\CustomerSetupFactory;
-use Magento\Eav\Model\Entity\Attribute\SetFactory as AttributeSetFactory;
+use Magento\Framework\Setup\UpgradeSchemaInterface;
 
 /**
  * @codeCoverageIgnore
  */
 class UpgradeSchema implements UpgradeSchemaInterface
 {
-
+    /**
+     * @var CustomerSetupFactory
+     */
     protected $customerSetupFactory;
+    /**
+     * @var AttributeSetFactory
+     */
     protected $attributeSetFactory;
     /**
      * @var State
@@ -76,6 +83,13 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $logger->addWriter($writer);
             $logger->info('====> Failed to upgrade customer schema');
             $logger->info($e->getMessage()."\n".$e->getTraceAsString());
+        }
+
+        if (version_compare($context->getVersion(), '0.0.6', '<')) {
+            $this->add2ndTelephone();
+        }
+        if (version_compare($context->getVersion(), '0.0.7', '<')) {
+            $this->update2ndTelephone();
         }
     }
 
@@ -228,6 +242,92 @@ class UpgradeSchema implements UpgradeSchemaInterface
         );
 
         $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_guest_id')
+                                   ->addData(
+                                       [
+                                           'attribute_set_id'   => $attributeSetId,
+                                           'attribute_group_id' => $attributeGroupId,
+                                           'used_in_forms'      => ['adminhtml_customer'],
+                                       ]
+                                   );
+
+        $attribute->save();
+    }
+
+    protected function add2ndTelephone()
+    {
+        /** @var CustomerSetup $customerSetup */
+        $customerSetup = $this->customerSetupFactory->create();
+
+        $customerEntity = $customerSetup->getEavConfig()->getEntityType('customer');
+        $attributeSetId = $customerEntity->getDefaultAttributeSetId();
+
+        /** @var AttributeSet $attributeSet */
+        $attributeSet     = $this->attributeSetFactory->create();
+        $attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
+
+        $customerSetup->addAttribute(
+            Customer::ENTITY,
+            'retail_telephone_2',
+            [
+                'type'         => 'varchar',
+                'label'        => 'Secondary Telephone',
+                'input'        => 'text',
+                'required'     => false,
+                'visible'      => true,
+                'user_defined' => true,
+                'sort_order'   => 1000,
+                'position'     => 1000,
+                'system'       => 0,
+                'is_used_in_grid' => true,
+                'is_visible_in_grid' => true
+            ]
+        );
+
+        $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_telephone_2')
+            ->addData(
+                [
+                    'attribute_set_id'   => $attributeSetId,
+                    'attribute_group_id' => $attributeGroupId,
+                    'used_in_forms'      => ['adminhtml_customer'],
+                ]
+            );
+
+        $attribute->save();
+    }
+
+    protected function update2ndTelephone()
+    {
+        /** @var CustomerSetup $customerSetup */
+        $customerSetup = $this->customerSetupFactory->create();
+
+        $customerEntity = $customerSetup->getEavConfig()->getEntityType('customer');
+        $attributeSetId = $customerEntity->getDefaultAttributeSetId();
+
+        /** @var AttributeSet $attributeSet */
+        $attributeSet     = $this->attributeSetFactory->create();
+        $attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
+
+        $customerSetup->addAttribute(
+            Customer::ENTITY,
+            'retail_telephone_2',
+            [
+                'type'         => 'varchar',
+                'label'        => 'Secondary Telephone',
+                'input'        => 'text',
+                'required'     => false,
+                'visible'      => true,
+                'user_defined' => true,
+                'sort_order'   => 1000,
+                'position'     => 1000,
+                'system'       => 0,
+                'is_used_in_grid' => true,
+                'is_visible_in_grid' => true,
+                'is_filterable_in_grid' => true,
+                'is_searchable_in_grid' => true
+            ]
+        );
+
+        $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_telephone_2')
             ->addData(
                 [
                     'attribute_set_id'   => $attributeSetId,
