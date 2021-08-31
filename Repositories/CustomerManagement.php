@@ -3,8 +3,10 @@
 namespace SM\Customer\Repositories;
 
 use Exception;
+use Magento\Catalog\Model\ProductFactory;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
+use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order;
 use SM\Core\Api\Data\CountryRegion;
 use SM\Core\Api\Data\CustomerAddress;
@@ -13,8 +15,6 @@ use SM\Core\Api\Data\XCustomer;
 use SM\Core\Model\DataObject;
 use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
-use Magento\Catalog\Model\ProductFactory;
-use Magento\Newsletter\Model\SubscriberFactory;
 
 class CustomerManagement extends ServiceAbstract
 {
@@ -292,23 +292,26 @@ class CustomerManagement extends ServiceAbstract
             foreach (explode(",", $searchField) as $field) {
                 if ($field === 'first_name' || $field === 'last_name') {
                     $_fieldFilters[] = "name";
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'telephone') {
                     $_fieldFilters[] = 'billing_telephone';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'id') {
                     $_fieldFilters  [] = 'entity_id';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'postcode') {
                     $_fieldFilters[] = 'billing_postcode';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'email') {
                     $_fieldFilters  [] = 'email';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                } else {
+                    $_fieldFilters  [] = $field;
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 }
             }
             $_fieldFilters = array_unique($_fieldFilters);
@@ -574,7 +577,7 @@ class CustomerManagement extends ServiceAbstract
                             ->save();
                     }
                 } else {
-                    throw new Exception("Can't find customer with id: ".$customerData->getId());
+                    throw new Exception("Can't find customer with id: " . $customerData->getId());
                 }
             } elseif ($addressType === 'shipping') {
                 throw new Exception("Please define customer when save shipping address");
@@ -589,7 +592,7 @@ class CustomerManagement extends ServiceAbstract
                 if ($addressData->getId() && $addressData->getId() < 1481282470403) {
                     $addressModel->load($addressData->getId());
                     if (!$addressModel->getId()) {
-                        throw new Exception(__("Can't get address id: ".$addressData->getId()));
+                        throw new Exception(__("Can't get address id: " . $addressData->getId()));
                     }
                 } else {
                     $addressData->setId(null);
@@ -677,7 +680,7 @@ class CustomerManagement extends ServiceAbstract
         if ($address->getId()) {
             $addressModel->load($address->getId());
             if (!$addressModel->getId()) {
-                throw new Exception(__("Can't get address id: ".$address->getId()));
+                throw new Exception(__("Can't get address id: " . $address->getId()));
             }
         }
         $addressModel->addData($address->getData());
