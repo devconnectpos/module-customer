@@ -648,12 +648,11 @@ class CustomerManagement extends ServiceAbstract
             throw new Exception(
                 __('A customer with the same email already exists in an associated website.')
             );
-        } catch (LocalizedException $e) {
-            $writer = new \Zend\Log\Writer\Stream(BP . '/var/log/connectpos.log');
-            $logger = new \Zend\Log\Logger();
-            $logger->addWriter($writer);
-            $logger->info('====> Failed to save customer');
-            $logger->info($e->getMessage() . "\n" . $e->getTraceAsString());
+        } catch (\Throwable $e) {
+            $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+            $logger = $objectManager->get('Psr\Log\LoggerInterface');
+            $logger->info("====> [CPOS] Failed to save customer: {$e->getMessage()}");
+            $logger->info($e->getTraceAsString());
             throw $e;
         }
 
