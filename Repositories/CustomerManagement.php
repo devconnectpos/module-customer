@@ -229,7 +229,7 @@ class CustomerManagement extends ServiceAbstract
                     $customer->setData('subscription', false);
                 }
 
-                $thirdPartyRP = $this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints();
+                $thirdPartyRP = $this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints() || $this->integrateHelper->isMirasvitRewardPoints();
                 if ($this->integrateHelper->isIntegrateRP() && $thirdPartyRP) {
                     $rewardPoints = $this->integrateHelper->getRpIntegrateManagement()
                         ->getCurrentIntegrateModel()
@@ -292,26 +292,26 @@ class CustomerManagement extends ServiceAbstract
             foreach (explode(",", $searchField) as $field) {
                 if ($field === 'first_name' || $field === 'last_name') {
                     $_fieldFilters[] = "name";
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'telephone') {
                     $_fieldFilters[] = 'billing_telephone';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'id') {
                     $_fieldFilters  [] = 'entity_id';
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'postcode') {
                     $_fieldFilters[] = 'billing_postcode';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } elseif ($field === 'email') {
                     $_fieldFilters  [] = 'email';
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 } else {
                     $_fieldFilters  [] = $field;
-                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
                 }
             }
             $_fieldFilters = array_unique($_fieldFilters);
@@ -577,7 +577,7 @@ class CustomerManagement extends ServiceAbstract
                             ->save();
                     }
                 } else {
-                    throw new Exception("Can't find customer with id: " . $customerData->getId());
+                    throw new Exception("Can't find customer with id: ".$customerData->getId());
                 }
             } elseif ($addressType === 'shipping') {
                 throw new Exception("Please define customer when save shipping address");
@@ -592,7 +592,7 @@ class CustomerManagement extends ServiceAbstract
                 if ($addressData->getId() && $addressData->getId() < 1481282470403) {
                     $addressModel->load($addressData->getId());
                     if (!$addressModel->getId()) {
-                        throw new Exception(__("Can't get address id: " . $addressData->getId()));
+                        throw new Exception(__("Can't get address id: ".$addressData->getId()));
                     }
                 } else {
                     $addressData->setId(null);
@@ -628,8 +628,7 @@ class CustomerManagement extends ServiceAbstract
                     ->updateCustomerStoreCreditBalance($customer->getDataModel(), $websiteId, $storeId, $customerData['store_credit_adjust']);
             }
 
-            if ($this->integrateHelper->isIntegrateRP() &&
-                (($this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints()) || $this->integrateHelper->isRewardPointMagento2EE())
+            if ($this->integrateHelper->isIntegrateRP() && (($this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints()) || $this->integrateHelper->isRewardPointMagento2EE() || $this->integrateHelper->isMirasvitRewardPoints())
                 && isset($customerData['rp_point_adjust'])
                 && $customer->getId()
             ) {
@@ -643,7 +642,6 @@ class CustomerManagement extends ServiceAbstract
                         $customerData['rp_point_adjust']
                     );
             }
-
         } catch (AlreadyExistsException $e) {
             throw new Exception(
                 __('A customer with the same email already exists in an associated website.')
@@ -679,7 +677,7 @@ class CustomerManagement extends ServiceAbstract
         if ($address->getId()) {
             $addressModel->load($address->getId());
             if (!$addressModel->getId()) {
-                throw new Exception(__("Can't get address id: " . $address->getId()));
+                throw new Exception(__("Can't get address id: ".$address->getId()));
             }
         }
         $addressModel->addData($address->getData());
@@ -746,7 +744,11 @@ class CustomerManagement extends ServiceAbstract
         ];
 
         if ($this->integrateHelper->isIntegrateRP()
-            && ($this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints())
+            && (
+                $this->integrateHelper->isAHWRewardPoints()
+                || $this->integrateHelper->isAmastyRewardPoints()
+                || $this->integrateHelper->isMirasvitRewardPoints()
+            )
         ) {
             $data['rp_point_balance'] = $this->integrateHelper
                 ->getRpIntegrateManagement()
