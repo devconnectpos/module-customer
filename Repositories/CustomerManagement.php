@@ -4,6 +4,8 @@ namespace SM\Customer\Repositories;
 
 use Exception;
 use Magento\Catalog\Model\ProductFactory;
+use Magento\Framework\App\State;
+use Magento\Framework\App\Area;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Framework\Exception\LocalizedException;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -109,6 +111,11 @@ class CustomerManagement extends ServiceAbstract
     private $orderHistoryManagement;
 
     /**
+     * @var State
+     */
+    private $state;
+
+    /**
      * CustomerManagement constructor.
      *
      * @param \Magento\Framework\App\RequestInterface                          $requestInterface
@@ -160,7 +167,8 @@ class CustomerManagement extends ServiceAbstract
         \Magento\Quote\Model\QuoteFactory $quoteFactory,
         \Magento\Framework\Registry $registry,
         \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement,
-        \Magento\Customer\Api\AccountManagementInterface $accountManagement
+        \Magento\Customer\Api\AccountManagementInterface $accountManagement,
+        State $state
     ) {
         $this->customerConfigShare = $customerConfigShare;
         $this->customerCollectionFactory = $customerCollectionFactory;
@@ -183,6 +191,7 @@ class CustomerManagement extends ServiceAbstract
         $this->orderHistoryManagement = $orderHistoryManagement;
         $this->registry = $registry;
         $this->accountManagement = $accountManagement;
+        $this->state = $state;
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
 
@@ -628,7 +637,9 @@ class CustomerManagement extends ServiceAbstract
                     ->updateCustomerStoreCreditBalance($customer->getDataModel(), $websiteId, $storeId, $customerData['store_credit_adjust']);
             }
 
-            if ($this->integrateHelper->isIntegrateRP() && (($this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints()) || $this->integrateHelper->isRewardPointMagento2EE() || $this->integrateHelper->isMirasvitRewardPoints())
+            if ($this->integrateHelper->isIntegrateRP()
+                && (($this->integrateHelper->isAHWRewardPoints() || $this->integrateHelper->isAmastyRewardPoints()) || $this->integrateHelper->isRewardPointMagento2EE()
+                    || $this->integrateHelper->isMirasvitRewardPoints())
                 && isset($customerData['rp_point_adjust'])
                 && $customer->getId()
             ) {
@@ -642,6 +653,14 @@ class CustomerManagement extends ServiceAbstract
                         $customerData['rp_point_adjust']
                     );
             }
+
+            // Magento restricts updating customer group for some unknown reason, thus we need to update the customer after creating new
+            /** @see \Magento\Customer\Model\AccountManagement::createAccount */
+            if ($customer->getGroupId() != $customerData->getData('group_id')) {
+                $customer->setGroupId($customerData->getData('group_id'));
+                $this->customerRepository->save($customer);
+            }
+
         } catch (AlreadyExistsException $e) {
             throw new Exception(
                 __('A customer with the same email already exists in an associated website.')
