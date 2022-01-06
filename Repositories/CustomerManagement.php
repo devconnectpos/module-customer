@@ -658,7 +658,12 @@ class CustomerManagement extends ServiceAbstract
             /** @see \Magento\Customer\Model\AccountManagement::createAccount */
             if ($customer->getGroupId() != $customerData->getData('group_id')) {
                 $customer->setGroupId($customerData->getData('group_id'));
-                $this->customerRepository->save($customer);
+
+                if ($customer instanceof \Magento\Customer\Model\Data\Customer) {
+                    $this->customerRepository->save($customer);
+                } else {
+                    $this->customerRepository->save($customer->getDataModel());
+                }
             }
 
         } catch (AlreadyExistsException $e) {
