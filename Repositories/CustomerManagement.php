@@ -621,7 +621,7 @@ class CustomerManagement extends ServiceAbstract
             if (isset($customerData['subscription']) && $customer->getId()) {
                 if ($customerData['subscription'] == 1) {
                     $this->subscriberFactory->create()->subscribeCustomerById($customer->getId());
-                } else {
+                } elseif (!$this->dataConfig->isBlockingCustomerFromUnsubscribe()) {
                     $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
                 }
             }
@@ -665,7 +665,6 @@ class CustomerManagement extends ServiceAbstract
                     $this->customerRepository->save($customer->getDataModel());
                 }
             }
-
         } catch (AlreadyExistsException $e) {
             throw new Exception(
                 __('A customer with the same email already exists in an associated website.')
@@ -828,7 +827,7 @@ class CustomerManagement extends ServiceAbstract
         if ($isSubscribe) {
             $checkSubscriber->subscribe($email);
         } else {
-            if ($checkSubscriber->getSubscriberId()) {
+            if ($checkSubscriber->getSubscriberId() && !$this->dataConfig->isBlockingCustomerFromUnsubscribe()) {
                 $checkSubscriber->unsubscribe($email);
             }
         }
