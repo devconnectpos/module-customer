@@ -336,7 +336,7 @@ class CustomerManagement extends ServiceAbstract
             );
         }
         if ($this->customerConfigShare->isWebsiteScope()) {
-            $collection->addFieldToFilter('website_id', $this->getStoreManager()->getStore($storeId)->getWebsiteId());
+            $collection->addFieldToFilter('website_id', ['in' => [$this->getStoreManager()->getStore($storeId)->getWebsiteId(), 0]]);
         }
 
         return $collection;
