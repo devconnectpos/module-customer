@@ -575,6 +575,7 @@ class CustomerManagement extends ServiceAbstract
             $customer = $this->getCustomerModel();
             $customerValue = $customer->getDataModel();
             $customerValue->setCustomAttribute('retail_veriface', $customerData->getVeriface());
+            $customerValue->setCustomAttribute('retail_note', $customerData->getRetailNote());
             $customer->updateData($customerValue);
             $customerData->setAddress(null);
             if ($customerData->getId() && $customerData->getId() < 1481282470403) {

@@ -62,17 +62,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
         try {
             $this->state->emulateAreaCode(
                 Area::AREA_ADMINHTML, function (SchemaSetupInterface $setup, ModuleContextInterface $context) {
-                if (version_compare($context->getVersion(), '0.0.2', '<')) {
+                if (version_compare($context->getVersion(), '0.0.2', '<=')) {
                     $this->addPhoneAttribute($setup);
                 }
-                if (version_compare($context->getVersion(), '0.0.4', '<')) {
+                if (version_compare($context->getVersion(), '0.0.4', '<=')) {
                     $this->addAvatarAttribute($setup);
                     $this->addVerifaceAttribute($setup);
                 }
-                if (version_compare($context->getVersion(), '0.0.5', '<')) {
+                if (version_compare($context->getVersion(), '0.0.5', '<=')) {
                     $this->addGuestId($setup);
                 }
-                if (version_compare($context->getVersion(), '0.0.6', '<')) {
+                if (version_compare($context->getVersion(), '0.0.6', '<=')) {
                     $this->add2ndTelephone($setup);
                 }
             }, [$setup, $context]
@@ -107,6 +107,8 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $this->addVerifaceAttribute($setup);
         $output->writeln('  |__ Add guest ID attribute');
         $this->addGuestId($setup);
+        $output->writeln('  |__ Add note attribute');
+        $this->addNote($setup);
     }
 
     /**
