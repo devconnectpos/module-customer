@@ -4,6 +4,8 @@ namespace SM\Customer\Repositories;
 
 use Exception;
 use Magento\Catalog\Model\ProductFactory;
+use Magento\Customer\Api\Data\AddressInterface;
+use Magento\Customer\Model\Data\Address;
 use Magento\Framework\App\State;
 use Magento\Framework\App\Area;
 use Magento\Framework\Exception\AlreadyExistsException;
@@ -708,6 +710,38 @@ class CustomerManagement extends ServiceAbstract
         $addressModel->setData('parent_id', $address->getData('customer_id'));
 
         return $this->getAddressData($addressModel->save());
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function bulkAddressSave()
+    {
+        $addressData = $this->request->getParams();
+
+        if (!is_array($addressData)) {
+            throw new Exception(__("Invalid address request data"));
+        }
+
+        if (!isset($addressData["addresses"])) {
+            throw new Exception(__("Address data is required"));
+        }
+
+        foreach ($addressData["addresses"] as $data) {
+            $address = $this->addressFactory->create();
+            $address->addData($data);
+            try {
+                $this->addressRepository->save($address->getDataModel());
+            } catch (\Throwable $e) {
+                $objectManager = \Magento\Framework\App\ObjectManager::getInstance();
+                $logger = $objectManager->get('Psr\Log\LoggerInterface');
+                $logger->critical("====> [CPOS] Failed to update address: {$e->getMessage()}");
+                $logger->critical($e->getTraceAsString());
+            }
+        }
+
+        return [];
     }
 
     /**
