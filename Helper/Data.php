@@ -112,8 +112,11 @@ class Data
         if ($customer->getData('guest_id')) {
             $customer->setData('retail_guest_id', $customer->getData('guest_id'));
         }
+
         if ($customer->getData('retail_note')) {
             $customer->setData('retail_note', $customer->getData('retail_note'));
+        } else {
+            $customer->setData('retail_note', '');
         }
 
         return $customer;
