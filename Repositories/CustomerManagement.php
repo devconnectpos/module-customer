@@ -659,14 +659,12 @@ class CustomerManagement extends ServiceAbstract
 
             // Magento restricts updating customer group for some unknown reason, thus we need to update the customer after creating new
             /** @see \Magento\Customer\Model\AccountManagement::createAccount */
-            if ($customer->getGroupId() != $customerData->getData('group_id')) {
-                $customer->setGroupId($customerData->getData('group_id'));
+            $customer->setGroupId($customerData->getData('group_id'));
 
-                if ($customer instanceof \Magento\Customer\Model\Data\Customer) {
-                    $this->customerRepository->save($customer);
-                } else {
-                    $this->customerRepository->save($customer->getDataModel());
-                }
+            if ($customer instanceof \Magento\Customer\Model\Data\Customer) {
+                $this->customerRepository->save($customer);
+            } else {
+                $this->customerRepository->save($customer->getDataModel());
             }
         } catch (AlreadyExistsException $e) {
             throw new Exception(
