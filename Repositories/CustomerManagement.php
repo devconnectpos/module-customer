@@ -4,12 +4,8 @@ namespace SM\Customer\Repositories;
 
 use Exception;
 use Magento\Catalog\Model\ProductFactory;
-use Magento\Customer\Api\Data\AddressInterface;
-use Magento\Customer\Model\Data\Address;
 use Magento\Framework\App\State;
-use Magento\Framework\App\Area;
 use Magento\Framework\Exception\AlreadyExistsException;
-use Magento\Framework\Exception\LocalizedException;
 use Magento\Newsletter\Model\SubscriberFactory;
 use Magento\Sales\Model\Order;
 use SM\Core\Api\Data\CountryRegion;
@@ -19,6 +15,7 @@ use SM\Core\Api\Data\XCustomer;
 use SM\Core\Model\DataObject;
 use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
+use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 
 class CustomerManagement extends ServiceAbstract
 {
@@ -118,6 +115,11 @@ class CustomerManagement extends ServiceAbstract
     private $state;
 
     /**
+     * @var CustomerResource
+     */
+    protected $customerResource;
+
+    /**
      * CustomerManagement constructor.
      *
      * @param \Magento\Framework\App\RequestInterface                          $requestInterface
@@ -144,6 +146,8 @@ class CustomerManagement extends ServiceAbstract
      * @param \Magento\Framework\Registry                                      $registry
      * @param \SM\Sales\Repositories\OrderHistoryManagement                    $orderHistoryManagement
      * @param \Magento\Customer\Api\AccountManagementInterface                 $accountManagement
+     * @param State                                                            $state
+     * @param CustomerResource                                                 $customerResource
      */
     public function __construct(
         \Magento\Framework\App\RequestInterface $requestInterface,
@@ -170,7 +174,8 @@ class CustomerManagement extends ServiceAbstract
         \Magento\Framework\Registry $registry,
         \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement,
         \Magento\Customer\Api\AccountManagementInterface $accountManagement,
-        State $state
+        State $state,
+        CustomerResource $customerResource
     ) {
         $this->customerConfigShare = $customerConfigShare;
         $this->customerCollectionFactory = $customerCollectionFactory;
@@ -194,6 +199,7 @@ class CustomerManagement extends ServiceAbstract
         $this->registry = $registry;
         $this->accountManagement = $accountManagement;
         $this->state = $state;
+        $this->customerResource = $customerResource;
         parent::__construct($requestInterface, $dataConfig, $storeManager);
     }
 
@@ -576,10 +582,9 @@ class CustomerManagement extends ServiceAbstract
         try {
             $customer = $this->getCustomerModel();
             $customerValue = $customer->getDataModel();
-            $customerValue->setCustomAttribute('retail_veriface', $customerData->getVeriface());
-            $customerValue->setCustomAttribute('retail_note', $customerData->getRetailNote());
             $customer->updateData($customerValue);
             $customerData->setAddress(null);
+
             if ($customerData->getId() && $customerData->getId() < 1481282470403) {
                 $customer = $customer->load($customerData->getId());
 
@@ -592,7 +597,7 @@ class CustomerManagement extends ServiceAbstract
                     throw new Exception("Can't find customer with id: ".$customerData->getId());
                 }
             } elseif ($addressType === 'shipping') {
-                throw new Exception("Please define customer when save shipping address");
+                throw new Exception("Please define customer when saving shipping address");
             } else {
                 $customer = $customer->addData($customerData->getData());
                 $customer = $this->accountManagement->createAccount($customer->getDataModel());
@@ -664,6 +669,7 @@ class CustomerManagement extends ServiceAbstract
             if ($customer instanceof \Magento\Customer\Model\Data\Customer) {
                 $this->customerRepository->save($customer);
             } else {
+                $this->customerResource->saveAttribute($customer, 'retail_note');
                 $this->customerRepository->save($customer->getDataModel());
             }
         } catch (AlreadyExistsException $e) {
