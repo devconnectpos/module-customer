@@ -11,9 +11,11 @@ use Magento\Customer\Setup\CustomerSetup;
 use Magento\Customer\Setup\CustomerSetupFactory;
 use Magento\Eav\Model\Entity\Attribute\Set as AttributeSet;
 use Magento\Eav\Model\Entity\Attribute\SetFactory as AttributeSetFactory;
+use Magento\Eav\Setup\EavSetupFactory;
 use Magento\Framework\App\Area;
 use Magento\Framework\App\State;
 use Magento\Framework\Setup\ModuleContextInterface;
+use Magento\Framework\Setup\ModuleDataSetupInterface;
 use Magento\Framework\Setup\SchemaSetupInterface;
 use Magento\Framework\Setup\UpgradeSchemaInterface;
 use Symfony\Component\Console\Output\OutputInterface;
@@ -35,19 +37,26 @@ class UpgradeSchema implements UpgradeSchemaInterface
      * @var State
      */
     private $state;
+    /**
+     * @var EavSetupFactory
+     */
+    private $eavSetupFactory;
 
     /**
      * UpgradeSchema constructor.
      *
      * @param CustomerSetupFactory $customerSetupFactory
      * @param AttributeSetFactory  $attributeSetFactory
+     * @param EavSetupFactory      $eavSetupFactory
      * @param State                $state
      */
     public function __construct(
         CustomerSetupFactory $customerSetupFactory,
         AttributeSetFactory $attributeSetFactory,
+        EavSetupFactory $eavSetupFactory,
         State $state
     ) {
+        $this->eavSetupFactory = $eavSetupFactory;
         $this->customerSetupFactory = $customerSetupFactory;
         $this->attributeSetFactory = $attributeSetFactory;
         $this->state = $state;
@@ -74,6 +83,9 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 }
                 if (version_compare($context->getVersion(), '0.0.6', '<=')) {
                     $this->add2ndTelephone($setup);
+                }
+                if (version_compare($context->getVersion(), '0.1.1', '<=')) {
+                    $this->addNote($setup);
                 }
             }, [$setup, $context]
             );
@@ -346,6 +358,60 @@ class UpgradeSchema implements UpgradeSchemaInterface
                 'type'                  => 'varchar',
                 'label'                 => 'Secondary Telephone',
                 'input'                 => 'text',
+                'required'              => false,
+                'visible'               => true,
+                'user_defined'          => true,
+                'sort_order'            => 1000,
+                'position'              => 1000,
+                'system'                => 0,
+                'is_used_in_grid'       => true,
+                'is_visible_in_grid'    => true,
+                'is_filterable_in_grid' => true,
+                'is_searchable_in_grid' => true,
+                'attribute_set_id'      => $attributeSetId,
+                'attribute_group_id'    => $attributeGroupId,
+                'used_in_forms'         => ['adminhtml_customer'],
+            ]
+        );
+
+        $setup->endSetup();
+    }
+
+    /**
+     * @param ModuleDataSetupInterface $setup
+     *
+     * @throws \Magento\Framework\Exception\LocalizedException
+     * @throws \Zend_Validate_Exception
+     */
+    protected function addNote(SchemaSetupInterface $setup)
+    {
+        $setup->startSetup();
+
+        $customerSetup = $this->customerSetupFactory->create();
+
+        // Skip if the attribute exists
+        $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_note');
+
+        if ($attribute) {
+            $setup->endSetup();
+
+            return;
+        }
+
+        $customerEntity = $customerSetup->getEavConfig()->getEntityType('customer');
+        $attributeSetId = $customerEntity->getDefaultAttributeSetId();
+
+        $attributeSet = $this->attributeSetFactory->create();
+        $attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
+
+        $eavSetup = $this->eavSetupFactory->create(['setup' => $setup]);
+        $eavSetup->addAttribute(
+            \Magento\Customer\Model\Customer::ENTITY,
+            'retail_note',
+            [
+                'type'                  => 'text',
+                'label'                 => 'Note',
+                'input'                 => 'textarea',
                 'required'              => false,
                 'visible'               => true,
                 'user_defined'          => true,
