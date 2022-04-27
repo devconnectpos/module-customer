@@ -624,6 +624,8 @@ class CustomerManagement extends ServiceAbstract
                 } else {
                     $customer->setDefaultShipping($addressModel->getId())->save();
                 }
+            } else {
+                $customer = $this->getCustomerModel()->load($customer->getId());
             }
 
             if (isset($customerData['subscription']) && $customer->getId()) {
