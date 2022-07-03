@@ -624,8 +624,6 @@ class CustomerManagement extends ServiceAbstract
                 } else {
                     $customer->setDefaultShipping($addressModel->getId())->save();
                 }
-            } else {
-                $customer = $this->getCustomerModel()->load($customer->getId());
             }
 
             if (isset($customerData['subscription']) && $customer->getId()) {
@@ -669,9 +667,18 @@ class CustomerManagement extends ServiceAbstract
             $customer->setGroupId($customerData->getData('group_id'));
 
             if ($customer instanceof \Magento\Customer\Model\Data\Customer) {
-                $this->customerRepository->save($customer);
+                $customer = $this->getCustomerModel()->load($customer->getId());
+                $customer->setData('retail_note', $customerData->getData('retail_note'));
+                $customer->setData('retail_telephone_2', $customerData->getData('retail_telephone_2'));
+                $customer->setData('retail_guest_id', $customerData->getData('retail_guest_id'));
+                $this->customerResource->saveAttribute($customer, 'retail_note');
+                $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
+                $this->customerResource->saveAttribute($customer, 'retail_guest_id');
+                $this->customerRepository->save($customer->getDataModel());
             } else {
                 $this->customerResource->saveAttribute($customer, 'retail_note');
+                $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
+                $this->customerResource->saveAttribute($customer, 'retail_guest_id');
                 $this->customerRepository->save($customer->getDataModel());
             }
         } catch (AlreadyExistsException $e) {
