@@ -46,16 +46,17 @@ class UpgradeSchema implements UpgradeSchemaInterface
      * UpgradeSchema constructor.
      *
      * @param CustomerSetupFactory $customerSetupFactory
-     * @param AttributeSetFactory  $attributeSetFactory
-     * @param EavSetupFactory      $eavSetupFactory
-     * @param State                $state
+     * @param AttributeSetFactory $attributeSetFactory
+     * @param EavSetupFactory $eavSetupFactory
+     * @param State $state
      */
     public function __construct(
         CustomerSetupFactory $customerSetupFactory,
-        AttributeSetFactory $attributeSetFactory,
-        EavSetupFactory $eavSetupFactory,
-        State $state
-    ) {
+        AttributeSetFactory  $attributeSetFactory,
+        EavSetupFactory      $eavSetupFactory,
+        State                $state
+    )
+    {
         $this->eavSetupFactory = $eavSetupFactory;
         $this->customerSetupFactory = $customerSetupFactory;
         $this->attributeSetFactory = $attributeSetFactory;
@@ -94,7 +95,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
             $logger = $objectManager->get('Psr\Log\LoggerInterface');
             $logger->critical("====> [CPOS] Failed to upgrade customer schema: {$e->getMessage()}");
             $logger->critical($e->getTraceAsString());
-            echo "Failed to upgrade customer schema: ".$e->getMessage()."\n";
+            echo "Failed to upgrade customer schema: " . $e->getMessage() . "\n";
         }
     }
 
@@ -102,7 +103,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
      * Execute all schema upgrade at once
      *
      * @param SchemaSetupInterface $setup
-     * @param OutputInterface      $output
+     * @param OutputInterface $output
      *
      * @throws \Magento\Framework\Exception\LocalizedException
      * @throws \Zend_Validate_Exception
@@ -138,7 +139,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // Skip if the attribute exists
         $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_telephone');
 
-        if ($attribute) {
+        if ($attribute->getId()) {
             $setup->endSetup();
 
             return;
@@ -155,18 +156,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
             Customer::ENTITY,
             'retail_telephone',
             [
-                'type'               => 'varchar',
-                'label'              => 'Telephone',
-                'input'              => 'text',
-                'required'           => false,
-                'visible'            => true,
-                'user_defined'       => true,
-                'sort_order'         => 1000,
-                'position'           => 1000,
-                'system'             => 0,
-                'attribute_set_id'   => $attributeSetId,
+                'type' => 'varchar',
+                'label' => 'Telephone',
+                'input' => 'text',
+                'required' => false,
+                'visible' => true,
+                'user_defined' => true,
+                'sort_order' => 1000,
+                'position' => 1000,
+                'system' => 0,
+                'attribute_set_id' => $attributeSetId,
                 'attribute_group_id' => $attributeGroupId,
-                'used_in_forms'      => ['adminhtml_customer'],
+                'used_in_forms' => ['adminhtml_customer'],
             ]
         );
 
@@ -188,7 +189,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // Skip if the attribute exists
         $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_avatar');
 
-        if ($attribute) {
+        if ($attribute->getId()) {
             $setup->endSetup();
 
             return;
@@ -205,18 +206,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
             Customer::ENTITY,
             'retail_avatar',
             [
-                'type'               => 'varchar',
-                'label'              => 'Avatar',
-                'input'              => 'text',
-                'required'           => false,
-                'visible'            => true,
-                'user_defined'       => true,
-                'sort_order'         => 1000,
-                'position'           => 1000,
-                'system'             => 0,
-                'attribute_set_id'   => $attributeSetId,
+                'type' => 'varchar',
+                'label' => 'Avatar',
+                'input' => 'text',
+                'required' => false,
+                'visible' => true,
+                'user_defined' => true,
+                'sort_order' => 1000,
+                'position' => 1000,
+                'system' => 0,
+                'attribute_set_id' => $attributeSetId,
                 'attribute_group_id' => $attributeGroupId,
-                'used_in_forms'      => ['adminhtml_customer'],
+                'used_in_forms' => ['adminhtml_customer'],
             ]
         );
 
@@ -238,7 +239,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // Skip if the attribute exists
         $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_veriface');
 
-        if ($attribute) {
+        if ($attribute->getId()) {
             $setup->endSetup();
 
             return;
@@ -255,18 +256,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
             Customer::ENTITY,
             'retail_veriface',
             [
-                'type'               => 'varchar',
-                'label'              => 'Veriface',
-                'input'              => 'text',
-                'required'           => false,
-                'visible'            => true,
-                'user_defined'       => true,
-                'sort_order'         => 1000,
-                'position'           => 1000,
-                'system'             => 0,
-                'attribute_set_id'   => $attributeSetId,
+                'type' => 'varchar',
+                'label' => 'Veriface',
+                'input' => 'text',
+                'required' => false,
+                'visible' => true,
+                'user_defined' => true,
+                'sort_order' => 1000,
+                'position' => 1000,
+                'system' => 0,
+                'attribute_set_id' => $attributeSetId,
                 'attribute_group_id' => $attributeGroupId,
-                'used_in_forms'      => ['adminhtml_customer'],
+                'used_in_forms' => ['adminhtml_customer'],
             ]
         );
 
@@ -288,7 +289,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // Skip if the attribute exists
         $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_guest_id');
 
-        if ($attribute) {
+        if ($attribute->getId()) {
             $setup->endSetup();
 
             return;
@@ -305,18 +306,18 @@ class UpgradeSchema implements UpgradeSchemaInterface
             Customer::ENTITY,
             'retail_guest_id',
             [
-                'type'               => 'varchar',
-                'label'              => 'Retail Guest Id',
-                'input'              => 'text',
-                'required'           => false,
-                'visible'            => true,
-                'user_defined'       => true,
-                'sort_order'         => 1000,
-                'position'           => 1000,
-                'system'             => 0,
-                'attribute_set_id'   => $attributeSetId,
+                'type' => 'varchar',
+                'label' => 'Retail Guest Id',
+                'input' => 'text',
+                'required' => false,
+                'visible' => true,
+                'user_defined' => true,
+                'sort_order' => 1000,
+                'position' => 1000,
+                'system' => 0,
+                'attribute_set_id' => $attributeSetId,
                 'attribute_group_id' => $attributeGroupId,
-                'used_in_forms'      => ['adminhtml_customer'],
+                'used_in_forms' => ['adminhtml_customer'],
             ]
         );
 
@@ -338,7 +339,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // Skip if the attribute exists
         $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_telephone_2');
 
-        if ($attribute) {
+        if ($attribute->getId()) {
             $setup->endSetup();
 
             return;
@@ -355,22 +356,22 @@ class UpgradeSchema implements UpgradeSchemaInterface
             Customer::ENTITY,
             'retail_telephone_2',
             [
-                'type'                  => 'varchar',
-                'label'                 => 'Secondary Telephone',
-                'input'                 => 'text',
-                'required'              => false,
-                'visible'               => true,
-                'user_defined'          => true,
-                'sort_order'            => 1000,
-                'position'              => 1000,
-                'system'                => 0,
-                'is_used_in_grid'       => true,
-                'is_visible_in_grid'    => true,
+                'type' => 'varchar',
+                'label' => 'Secondary Telephone',
+                'input' => 'text',
+                'required' => false,
+                'visible' => true,
+                'user_defined' => true,
+                'sort_order' => 1000,
+                'position' => 1000,
+                'system' => 0,
+                'is_used_in_grid' => true,
+                'is_visible_in_grid' => true,
                 'is_filterable_in_grid' => true,
                 'is_searchable_in_grid' => true,
-                'attribute_set_id'      => $attributeSetId,
-                'attribute_group_id'    => $attributeGroupId,
-                'used_in_forms'         => ['adminhtml_customer'],
+                'attribute_set_id' => $attributeSetId,
+                'attribute_group_id' => $attributeGroupId,
+                'used_in_forms' => ['adminhtml_customer'],
             ]
         );
 
@@ -392,7 +393,7 @@ class UpgradeSchema implements UpgradeSchemaInterface
         // Skip if the attribute exists
         $attribute = $customerSetup->getEavConfig()->getAttribute(Customer::ENTITY, 'retail_note');
 
-        if ($attribute) {
+        if ($attribute->getId()) {
             $setup->endSetup();
 
             return;
@@ -404,30 +405,30 @@ class UpgradeSchema implements UpgradeSchemaInterface
         $attributeSet = $this->attributeSetFactory->create();
         $attributeGroupId = $attributeSet->getDefaultGroupId($attributeSetId);
 
-        $eavSetup = $this->eavSetupFactory->create(['setup' => $setup]);
-        $eavSetup->addAttribute(
+        $customerSetup->addAttribute(
             \Magento\Customer\Model\Customer::ENTITY,
             'retail_note',
             [
-                'type'                  => 'text',
-                'label'                 => 'Note',
-                'input'                 => 'textarea',
-                'required'              => false,
-                'visible'               => true,
-                'user_defined'          => true,
-                'sort_order'            => 1000,
-                'position'              => 1000,
-                'system'                => 0,
-                'is_used_in_grid'       => true,
-                'is_visible_in_grid'    => true,
+                'type' => 'text',
+                'label' => 'Note',
+                'input' => 'textarea',
+                'required' => false,
+                'visible' => true,
+                'user_defined' => true,
+                'sort_order' => 1000,
+                'position' => 1000,
+                'system' => 0,
+                'is_used_in_grid' => true,
+                'is_visible_in_grid' => true,
                 'is_filterable_in_grid' => true,
                 'is_searchable_in_grid' => true,
-                'attribute_set_id'      => $attributeSetId,
-                'attribute_group_id'    => $attributeGroupId,
-                'used_in_forms'         => ['adminhtml_customer'],
+                'attribute_set_id' => $attributeSetId,
+                'attribute_group_id' => $attributeGroupId,
+                'used_in_forms' => ['adminhtml_customer'],
             ]
         );
 
         $setup->endSetup();
+
     }
 }
