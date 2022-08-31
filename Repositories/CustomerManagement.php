@@ -635,7 +635,7 @@ class CustomerManagement extends ServiceAbstract
             }
 
             if ($this->integrateHelper->isIntegrateStoreCredit()
-                && $this->integrateHelper->isExistStoreCreditMagento2EE()
+                && ($this->integrateHelper->isExistStoreCreditMagento2EE() || $this->integrateHelper->isExistStoreCreditAheadworks())
                 && isset($customerData['store_credit_adjust'])
                 && $customer->getId()
             ) {
@@ -843,7 +843,7 @@ class CustomerManagement extends ServiceAbstract
         }
 
         if ($this->integrateHelper->isIntegrateStoreCredit()
-            && $this->integrateHelper->isExistStoreCreditMagento2EE()
+            && ($this->integrateHelper->isExistStoreCreditMagento2EE() || $this->integrateHelper->isExistStoreCreditAheadworks())
         ) {
             $data['store_credit_balance'] = $this->integrateHelper
                 ->getStoreCreditIntegrateManagement()
