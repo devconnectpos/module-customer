@@ -564,7 +564,7 @@ class CustomerManagement extends ServiceAbstract
                     throw new Exception(__('A customer with the same email already exists in an associated website.'));
                 }
             } catch (Exception $e) {
-                // CustomerRepository will throw exception if can't not find customer with email
+                // CustomerRepository will throw exception if it cannot find customer with email
             }
         }
 
@@ -601,6 +601,15 @@ class CustomerManagement extends ServiceAbstract
             } else {
                 $customer = $customer->addData($customerData->getData());
                 $customer = $this->accountManagement->createAccount($customer->getDataModel());
+            }
+
+            $oldAddressData = [];
+            if (empty($addressData) && $customer->getId()) {
+                $cust = $this->customerRepository->getById($customer->getId());
+
+                if ($cust->getAddresses()) {
+                    $oldAddressData = $cust->getAddresses();
+                }
             }
 
             if ($addressData && $customer->getId()) {
@@ -674,12 +683,24 @@ class CustomerManagement extends ServiceAbstract
                 $this->customerResource->saveAttribute($customer, 'retail_note');
                 $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
                 $this->customerResource->saveAttribute($customer, 'retail_guest_id');
-                $this->customerRepository->save($customer->getDataModel());
+                $saveModel = $customer->getDataModel();
+
+                if (!empty($oldAddressData)) {
+                    $saveModel->setAddresses($oldAddressData);
+                }
+
+                $this->customerRepository->save($saveModel);
             } else {
                 $this->customerResource->saveAttribute($customer, 'retail_note');
                 $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
                 $this->customerResource->saveAttribute($customer, 'retail_guest_id');
-                $this->customerRepository->save($customer->getDataModel());
+                $saveModel = $customer->getDataModel();
+
+                if (!empty($oldAddressData)) {
+                    $saveModel->setAddresses($oldAddressData);
+                }
+
+                $this->customerRepository->save($saveModel);
             }
         } catch (AlreadyExistsException $e) {
             throw new Exception(
