@@ -4,6 +4,7 @@ namespace SM\Customer\Repositories;
 
 use Exception;
 use Magento\Catalog\Model\ProductFactory;
+use Magento\Framework\App\ObjectManager;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -637,8 +638,10 @@ class CustomerManagement extends ServiceAbstract
 
             if (isset($customerData['subscription']) && $customer->getId()) {
                 if ($customerData['subscription'] == 1) {
-                    $this->subscriberFactory->create()->subscribeCustomerById($customer->getId());
+                    $this->subscriberFactory->create()->subscribe($customer->getEmail());
                 } elseif (!$this->dataConfig->isBlockingCustomerFromUnsubscribe()) {
+                    $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
+                } else {
                     $this->subscriberFactory->create()->unsubscribeCustomerById($customer->getId());
                 }
             }
