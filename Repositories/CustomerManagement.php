@@ -438,15 +438,8 @@ class CustomerManagement extends ServiceAbstract
         } else {
             $collection->setCurPage($searchCriteria->getData('currentPage'));
         }
-        if (is_nan($searchCriteria->getData('pageSize'))) {
-            $collection->setPageSize(
-                DataConfig::PAGE_SIZE_LOAD_CUSTOMER
-            );
-        } else {
-            $collection->setPageSize(
-                $searchCriteria->getData('pageSize')
-            );
-        }
+
+        $collection->setPageSize(300);
 
         return $collection;
     }
