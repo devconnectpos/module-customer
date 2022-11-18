@@ -130,7 +130,7 @@ class Data
             mkdir($folderPath, 0777, true);
         }
 
-        $image_parts = explode(";base64,", $img);
+        $image_parts = explode(";base64,", (string)$img);
         $image_base64 = base64_decode($image_parts[1]);
         $file = $folderPath . uniqid() . '.png';
 

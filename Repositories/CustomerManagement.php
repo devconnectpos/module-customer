@@ -285,7 +285,7 @@ class CustomerManagement extends ServiceAbstract
         }
         /** @var \SM\Customer\Model\ResourceModel\Grid\Collection $collection */
         $collection = $this->customerGridCollectionFactory->create();
-        if (is_nan($searchCriteria->getData('currentPage'))) {
+        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
             $collection->setCurPage(1);
         } else {
             $collection->setCurPage($searchCriteria->getData('currentPage'));
@@ -299,7 +299,7 @@ class CustomerManagement extends ServiceAbstract
             } else {
                 $ids = $searchCriteria->getData('entity_id');
             }
-            $collection->addFieldToFilter('entity_id', ['in' => explode(",", $ids)]);
+            $collection->addFieldToFilter('entity_id', ['in' => explode(",", (string)$ids)]);
         }
         if ($searchCriteria->getData('searchOnline') == 1) {
             $searchValue = $searchCriteria->getData('searchValue');
@@ -307,7 +307,7 @@ class CustomerManagement extends ServiceAbstract
 
             $_fieldFilters = [];
             $_valueFilters = [];
-            foreach (explode(",", $searchField) as $field) {
+            foreach (explode(",", (string)$searchField) as $field) {
                 if ($field === 'first_name' || $field === 'last_name') {
                     $_fieldFilters[] = "name";
                     $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
@@ -335,7 +335,7 @@ class CustomerManagement extends ServiceAbstract
             $_fieldFilters = array_unique($_fieldFilters);
             $collection->addFieldToFilter($_fieldFilters, $_valueFilters);
         }
-        if (is_nan($searchCriteria->getData('pageSize'))) {
+        if (is_nan((float)$searchCriteria->getData('pageSize'))) {
             $collection->setPageSize(
                 DataConfig::PAGE_SIZE_LOAD_CUSTOMER
             );
@@ -433,7 +433,7 @@ class CustomerManagement extends ServiceAbstract
     {
         /** @var   \Magento\Directory\Model\ResourceModel\Country\Collection $collection */
         $collection = $this->countryCollection->create();
-        if (is_nan($searchCriteria->getData('currentPage'))) {
+        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
             $collection->setCurPage(1);
         } else {
             $collection->setCurPage($searchCriteria->getData('currentPage'));
@@ -485,12 +485,12 @@ class CustomerManagement extends ServiceAbstract
     {
         /** @var   \Magento\Customer\Model\ResourceModel\Group\Collection $collection */
         $collection = $this->customerGroupCollectionFactory->create();
-        if (is_nan($searchCriteria->getData('currentPage'))) {
+        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
             $collection->setCurPage(1);
         } else {
             $collection->setCurPage($searchCriteria->getData('currentPage'));
         }
-        if (is_nan($searchCriteria->getData('pageSize'))) {
+        if (is_nan((float)$searchCriteria->getData('pageSize'))) {
             $collection->setPageSize(
                 DataConfig::PAGE_SIZE_LOAD_CUSTOMER
             );
@@ -500,7 +500,7 @@ class CustomerManagement extends ServiceAbstract
             );
         }
         if ($searchCriteria->getData('entity_id')) {
-            $arr = explode(",", $searchCriteria->getData('entity_id'));
+            $arr = explode(",", (string)$searchCriteria->getData('entity_id'));
             $collection->addFieldToFilter('customer_group_id', ['in' => $arr]);
         }
 
