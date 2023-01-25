@@ -214,6 +214,7 @@ class CustomerManagement extends ServiceAbstract
     }
 
     /**
+     * For updating module
      * @param null $searchCriteria
      *
      * @return \SM\Core\Api\SearchResult
