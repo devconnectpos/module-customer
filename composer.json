@@ -2,7 +2,7 @@
 	"name": "connectpos/module-customer",
 	"description": "N/A",
 	"type": "magento2-module",
-  "version": "23.01.25",
+  "version": "24.02.03",
 	"license": [
 		"proprietary"
 	],
