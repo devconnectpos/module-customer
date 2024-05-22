@@ -4,7 +4,7 @@ namespace SM\Customer\Repositories;
 
 use Exception;
 use Magento\Catalog\Model\ProductFactory;
-use Magento\Framework\App\ObjectManager;
+use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 use Magento\Framework\App\State;
 use Magento\Framework\Exception\AlreadyExistsException;
 use Magento\Newsletter\Model\SubscriberFactory;
@@ -16,7 +16,6 @@ use SM\Core\Api\Data\XCustomer;
 use SM\Core\Model\DataObject;
 use SM\XRetail\Helper\DataConfig;
 use SM\XRetail\Repositories\Contract\ServiceAbstract;
-use Magento\Customer\Model\ResourceModel\Customer as CustomerResource;
 
 class CustomerManagement extends ServiceAbstract
 {
@@ -65,14 +64,6 @@ class CustomerManagement extends ServiceAbstract
      */
     protected $accountManagement;
     /**
-     * @var \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory
-     */
-    private $customerCollectionFactory;
-    /**
-     * @var \Magento\Customer\Model\Config\Share
-     */
-    private $customerConfigShare;
-    /**
      * @var \Magento\Catalog\Model\Product
      */
     protected $productFactory;
@@ -80,6 +71,26 @@ class CustomerManagement extends ServiceAbstract
      * @var \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory
      */
     protected $salesCollectionFactory;
+    /**
+     * @var \Magento\Customer\Api\GroupManagementInterface
+     */
+    protected $customerGroupManagement;
+    /**
+     * @var \Magento\Quote\Model\QuoteFactory
+     */
+    protected $quoteFactory;
+    /**
+     * @var CustomerResource
+     */
+    protected $customerResource;
+    /**
+     * @var \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory
+     */
+    private $customerCollectionFactory;
+    /**
+     * @var \Magento\Customer\Model\Config\Share
+     */
+    private $customerConfigShare;
     /**
      * @var \SM\Integrate\Helper\Data
      */
@@ -98,86 +109,73 @@ class CustomerManagement extends ServiceAbstract
      */
     private $subscriberFactory;
     /**
-     * @var \Magento\Customer\Api\GroupManagementInterface
-     */
-    protected $customerGroupManagement;
-    /**
-     * @var \Magento\Quote\Model\QuoteFactory
-     */
-    protected $quoteFactory;
-    /**
      * @var \SM\Sales\Repositories\OrderHistoryManagement
      */
     private $orderHistoryManagement;
-
     /**
      * @var State
      */
     private $state;
 
     /**
-     * @var CustomerResource
-     */
-    protected $customerResource;
-
-    /**
      * CustomerManagement constructor.
      *
-     * @param \Magento\Framework\App\RequestInterface                          $requestInterface
-     * @param \SM\XRetail\Helper\DataConfig                                    $dataConfig
-     * @param \Magento\Store\Model\StoreManagerInterface                       $storeManager
+     * @param \Magento\Framework\App\RequestInterface $requestInterface
+     * @param \SM\XRetail\Helper\DataConfig $dataConfig
+     * @param \Magento\Store\Model\StoreManagerInterface $storeManager
      * @param \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory $customerCollectionFactory
-     * @param \Magento\Customer\Model\Config\Share                             $customerConfigShare
+     * @param \Magento\Customer\Model\Config\Share $customerConfigShare
      * @param \Magento\Directory\Model\ResourceModel\Country\CollectionFactory $countryCollectionFactory
-     * @param \Magento\Framework\App\ResourceConnection                        $resource
-     * @param \Magento\Customer\Model\ResourceModel\Group\CollectionFactory    $groupCollectionFactory
-     * @param \Magento\Customer\Model\CustomerFactory                          $customerFactory
-     * @param \Magento\Customer\Api\CustomerRepositoryInterface                $customerRepository
-     * @param \SM\Customer\Helper\Data                                         $customerHelper
-     * @param \Magento\Customer\Api\AddressRepositoryInterface                 $addressRepository
-     * @param \Magento\Customer\Model\AddressFactory                           $addressFactory
-     * @param \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory        $salesCollectionFactory
-     * @param \Magento\Catalog\Model\ProductFactory                            $productFactory
-     * @param \SM\Integrate\Helper\Data                                        $integrateHelperData
-     * @param \SM\Wishlist\Repositories\WishlistManagement                     $wishlistManagement
-     * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory          $customerGridCollection
-     * @param \Magento\Customer\Api\GroupManagementInterface                   $customerGroupManagement
-     * @param SubscriberFactory                                                $subscriberFactory
-     * @param \Magento\Quote\Model\QuoteFactory                                $quoteFactory
-     * @param \Magento\Framework\Registry                                      $registry
-     * @param \SM\Sales\Repositories\OrderHistoryManagement                    $orderHistoryManagement
-     * @param \Magento\Customer\Api\AccountManagementInterface                 $accountManagement
-     * @param State                                                            $state
-     * @param CustomerResource                                                 $customerResource
+     * @param \Magento\Framework\App\ResourceConnection $resource
+     * @param \Magento\Customer\Model\ResourceModel\Group\CollectionFactory $groupCollectionFactory
+     * @param \Magento\Customer\Model\CustomerFactory $customerFactory
+     * @param \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository
+     * @param \SM\Customer\Helper\Data $customerHelper
+     * @param \Magento\Customer\Api\AddressRepositoryInterface $addressRepository
+     * @param \Magento\Customer\Model\AddressFactory $addressFactory
+     * @param \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory $salesCollectionFactory
+     * @param \Magento\Catalog\Model\ProductFactory $productFactory
+     * @param \SM\Integrate\Helper\Data $integrateHelperData
+     * @param \SM\Wishlist\Repositories\WishlistManagement $wishlistManagement
+     * @param \SM\Customer\Model\ResourceModel\Grid\CollectionFactory $customerGridCollection
+     * @param \Magento\Customer\Api\GroupManagementInterface $customerGroupManagement
+     * @param SubscriberFactory $subscriberFactory
+     * @param \Magento\Quote\Model\QuoteFactory $quoteFactory
+     * @param \Magento\Framework\Registry $registry
+     * @param \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement
+     * @param \Magento\Customer\Api\AccountManagementInterface $accountManagement
+     * @param State $state
+     * @param CustomerResource $customerResource
      */
     public function __construct(
-        \Magento\Framework\App\RequestInterface $requestInterface,
-        \SM\XRetail\Helper\DataConfig $dataConfig,
-        \Magento\Store\Model\StoreManagerInterface $storeManager,
+        \Magento\Framework\App\RequestInterface                          $requestInterface,
+        \SM\XRetail\Helper\DataConfig                                    $dataConfig,
+        \Magento\Store\Model\StoreManagerInterface                       $storeManager,
         \Magento\Customer\Model\ResourceModel\Customer\CollectionFactory $customerCollectionFactory,
-        \Magento\Customer\Model\Config\Share $customerConfigShare,
+        \Magento\Customer\Model\Config\Share                             $customerConfigShare,
         \Magento\Directory\Model\ResourceModel\Country\CollectionFactory $countryCollectionFactory,
-        \Magento\Framework\App\ResourceConnection $resource,
-        \Magento\Customer\Model\ResourceModel\Group\CollectionFactory $groupCollectionFactory,
-        \Magento\Customer\Model\CustomerFactory $customerFactory,
-        \Magento\Customer\Api\CustomerRepositoryInterface $customerRepository,
-        \SM\Customer\Helper\Data $customerHelper,
-        \Magento\Customer\Api\AddressRepositoryInterface $addressRepository,
-        \Magento\Customer\Model\AddressFactory $addressFactory,
-        \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory $salesCollectionFactory,
-        ProductFactory $productFactory,
-        \SM\Integrate\Helper\Data $integrateHelperData,
-        \SM\Wishlist\Repositories\WishlistManagement $wishlistManagement,
-        \SM\Customer\Model\ResourceModel\Grid\CollectionFactory $customerGridCollection,
-        \Magento\Customer\Api\GroupManagementInterface $customerGroupManagement,
-        SubscriberFactory $subscriberFactory,
-        \Magento\Quote\Model\QuoteFactory $quoteFactory,
-        \Magento\Framework\Registry $registry,
-        \SM\Sales\Repositories\OrderHistoryManagement $orderHistoryManagement,
-        \Magento\Customer\Api\AccountManagementInterface $accountManagement,
-        State $state,
-        CustomerResource $customerResource
-    ) {
+        \Magento\Framework\App\ResourceConnection                        $resource,
+        \Magento\Customer\Model\ResourceModel\Group\CollectionFactory    $groupCollectionFactory,
+        \Magento\Customer\Model\CustomerFactory                          $customerFactory,
+        \Magento\Customer\Api\CustomerRepositoryInterface                $customerRepository,
+        \SM\Customer\Helper\Data                                         $customerHelper,
+        \Magento\Customer\Api\AddressRepositoryInterface                 $addressRepository,
+        \Magento\Customer\Model\AddressFactory                           $addressFactory,
+        \Magento\Sales\Model\ResourceModel\Sale\CollectionFactory        $salesCollectionFactory,
+        ProductFactory                                                   $productFactory,
+        \SM\Integrate\Helper\Data                                        $integrateHelperData,
+        \SM\Wishlist\Repositories\WishlistManagement                     $wishlistManagement,
+        \SM\Customer\Model\ResourceModel\Grid\CollectionFactory          $customerGridCollection,
+        \Magento\Customer\Api\GroupManagementInterface                   $customerGroupManagement,
+        SubscriberFactory                                                $subscriberFactory,
+        \Magento\Quote\Model\QuoteFactory                                $quoteFactory,
+        \Magento\Framework\Registry                                      $registry,
+        \SM\Sales\Repositories\OrderHistoryManagement                    $orderHistoryManagement,
+        \Magento\Customer\Api\AccountManagementInterface                 $accountManagement,
+        State                                                            $state,
+        CustomerResource                                                 $customerResource
+    )
+    {
         $this->customerConfigShare = $customerConfigShare;
         $this->customerCollectionFactory = $customerCollectionFactory;
         $this->countryCollection = $countryCollectionFactory;
@@ -311,26 +309,26 @@ class CustomerManagement extends ServiceAbstract
             foreach (explode(",", (string)$searchField) as $field) {
                 if ($field === 'first_name' || $field === 'last_name') {
                     $_fieldFilters[] = "name";
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'telephone') {
                     $_fieldFilters[] = 'billing_telephone';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'id') {
                     $_fieldFilters  [] = 'entity_id';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'postcode') {
                     $_fieldFilters[] = 'billing_postcode';
                     $_fieldFilters[] = 'shipping_full';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } elseif ($field === 'email') {
                     $_fieldFilters  [] = 'email';
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 } else {
                     $_fieldFilters  [] = $field;
-                    $_valueFilters[] = ['like' => '%'.$searchValue.'%'];
+                    $_valueFilters[] = ['like' => '%' . $searchValue . '%'];
                 }
             }
             $_fieldFilters = array_unique($_fieldFilters);
@@ -347,162 +345,6 @@ class CustomerManagement extends ServiceAbstract
         }
         if ($this->customerConfigShare->isWebsiteScope()) {
             $collection->addFieldToFilter('website_id', ['in' => [$this->getStoreManager()->getStore($storeId)->getWebsiteId(), 0]]);
-        }
-
-        return $collection;
-    }
-
-    /**
-     * @param \Magento\Customer\Model\Customer $customer
-     *
-     * @return array
-     */
-    protected function getCustomerAddress(\Magento\Customer\Model\Customer $customer)
-    {
-        $customerAdd = [];
-
-        foreach ($customer->getAddresses() as $address) {
-            /** @var \Magento\Customer\Model\Address $address */
-            $customerAdd[] = $this->getAddressData($address);
-        }
-
-        return $customerAdd;
-    }
-
-    /**
-     * Get customer address base on api
-     *
-     * @param \Magento\Customer\Model\Address $address
-     *
-     * @return array
-     * @throws \ReflectionException
-     */
-    protected function getAddressData(\Magento\Customer\Model\Address $address)
-    {
-        $addData = $address->getData();
-        $addData['first_name'] = $addData['firstname'];
-        $addData['last_name'] = $addData['lastname'];
-        $addData['street'] = $address->getStreet();
-        $addData['company'] = is_null($address->getCompany()) ? '' : $address->getCompany();
-        $_customerAdd = new CustomerAddress($addData);
-
-        return $_customerAdd->getOutput();
-    }
-
-    /**
-     * @return array
-     * @throws \ReflectionException
-     * @throws \Exception
-     */
-    public function getCountryRegionData()
-    {
-        $items = [];
-        $collection = $this->getCountryCollection($this->getSearchCriteria());
-        if ($collection->getLastPageNumber() < $this->getSearchCriteria()->getData('currentPage')) {
-        } else {
-            foreach ($collection as $country) {
-                /** @var \Magento\Directory\Model\Country $country */
-                $regionCollection = $country->getRegionCollection();
-                $regions = [];
-                foreach ($regionCollection as $region) {
-                    $regions[] = $region->getData();
-                }
-                $countryRegion = new CountryRegion();
-                $countryRegion->addData(
-                    [
-                        'country_id' => $country->getCountryId(),
-                        'name'       => $country->getName(),
-                        'regions'    => $regions,
-                    ]
-                );
-                $items[] = $countryRegion;
-            }
-        }
-
-        return $this->getSearchResult()
-            ->setItems($items)
-            ->setTotalCount($collection->getSize())
-            ->getOutput();
-    }
-
-    /**
-     * @param $searchCriteria
-     *
-     * @return \Magento\Directory\Model\ResourceModel\Country\Collection
-     */
-    protected function getCountryCollection($searchCriteria)
-    {
-        /** @var   \Magento\Directory\Model\ResourceModel\Country\Collection $collection */
-        $collection = $this->countryCollection->create();
-        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
-            $collection->setCurPage(1);
-        } else {
-            $collection->setCurPage($searchCriteria->getData('currentPage'));
-        }
-
-        $collection->setPageSize(300);
-
-        return $collection;
-    }
-
-    /**
-     * @return array
-     * @throws \Exception
-     */
-    public function getCustomerGroupData()
-    {
-        $items = [];
-        $collection = $this->getCustomerGroupCollection($this->getSearchCriteria());
-        if ($collection->getLastPageNumber() < $this->getSearchCriteria()->getData('currentPage')) {
-        } else {
-            foreach ($collection as $group) {
-                $g = new CustomerGroup();
-                /** @var \Magento\Customer\Model\Group $group */
-                $g->addData(
-                    [
-                        'customer_group_id'   => $group->getId(),
-                        'customer_group_code' => $group->getCode(),
-                        'tax_class_id'        => $group->getData('tax_class_id'),
-                        'tax_class_name'      => $group->getTaxClassName(),
-                    ]
-                );
-                $items[] = $g;
-            }
-        }
-
-        return $this->getSearchResult()
-            ->setSearchCriteria($this->getSearchCriteria())
-            ->setItems($items)
-            ->setTotalCount($collection->getSize())
-            ->getOutput();
-    }
-
-    /**
-     * @param $searchCriteria
-     *
-     * @return \Magento\Customer\Model\ResourceModel\Group\Collection
-     */
-    protected function getCustomerGroupCollection($searchCriteria)
-    {
-        /** @var   \Magento\Customer\Model\ResourceModel\Group\Collection $collection */
-        $collection = $this->customerGroupCollectionFactory->create();
-        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
-            $collection->setCurPage(1);
-        } else {
-            $collection->setCurPage($searchCriteria->getData('currentPage'));
-        }
-        if (is_nan((float)$searchCriteria->getData('pageSize'))) {
-            $collection->setPageSize(
-                DataConfig::PAGE_SIZE_LOAD_CUSTOMER
-            );
-        } else {
-            $collection->setPageSize(
-                $searchCriteria->getData('pageSize')
-            );
-        }
-        if ($searchCriteria->getData('entity_id')) {
-            $arr = explode(",", (string)$searchCriteria->getData('entity_id'));
-            $collection->addFieldToFilter('customer_group_id', ['in' => $arr]);
         }
 
         return $collection;
@@ -589,7 +431,7 @@ class CustomerManagement extends ServiceAbstract
                             ->save();
                     }
                 } else {
-                    throw new Exception("Can't find customer with id: ".$customerData->getId());
+                    throw new Exception("Can't find customer with id: " . $customerData->getId());
                 }
             } elseif ($addressType === 'shipping') {
                 throw new Exception("Please define customer when saving shipping address");
@@ -613,7 +455,7 @@ class CustomerManagement extends ServiceAbstract
                 if ($addressData->getId() && $addressData->getId() < 1481282470403) {
                     $addressModel->load($addressData->getId());
                     if (!$addressModel->getId()) {
-                        throw new Exception(__("Can't get address id: ".$addressData->getId()));
+                        throw new Exception(__("Can't get address id: " . $addressData->getId()));
                     }
                 } else {
                     $addressData->setId(null);
@@ -719,12 +561,188 @@ class CustomerManagement extends ServiceAbstract
 
         $searchCriteria = new \Magento\Framework\DataObject(
             [
-                'storeId'   => $storeId,
+                'storeId' => $storeId,
                 'entity_id' => $customer->getId(),
             ]
         );
 
         return $this->loadCustomers($searchCriteria)->getOutput();
+    }
+
+    /**
+     * @return \Magento\Customer\Model\Customer
+     */
+    protected function getCustomerModel()
+    {
+        return $this->customerFactory->create();
+    }
+
+    /**
+     * @return \Magento\Customer\Model\Address
+     */
+    protected function getAddressModel()
+    {
+        return $this->addressFactory->create();
+    }
+
+    /**
+     * @param \Magento\Customer\Model\Customer $customer
+     *
+     * @return array
+     */
+    protected function getCustomerAddress(\Magento\Customer\Model\Customer $customer)
+    {
+        $customerAdd = [];
+
+        foreach ($customer->getAddresses() as $address) {
+            /** @var \Magento\Customer\Model\Address $address */
+            $customerAdd[] = $this->getAddressData($address);
+        }
+
+        return $customerAdd;
+    }
+
+    /**
+     * Get customer address base on api
+     *
+     * @param \Magento\Customer\Model\Address $address
+     *
+     * @return array
+     * @throws \ReflectionException
+     */
+    protected function getAddressData(\Magento\Customer\Model\Address $address)
+    {
+        $addData = $address->getData();
+        $addData['first_name'] = $addData['firstname'];
+        $addData['last_name'] = $addData['lastname'];
+        $addData['street'] = $address->getStreet();
+        $addData['company'] = is_null($address->getCompany()) ? '' : $address->getCompany();
+        $_customerAdd = new CustomerAddress($addData);
+
+        return $_customerAdd->getOutput();
+    }
+
+    /**
+     * @return array
+     * @throws \ReflectionException
+     * @throws \Exception
+     */
+    public function getCountryRegionData()
+    {
+        $items = [];
+        $collection = $this->getCountryCollection($this->getSearchCriteria());
+        $pageSize = $this->getSearchCriteria()->getData('pageSize');
+        $currentPage = $this->getSearchCriteria()->getData('currentPage');
+        $totalPage = ceil($collection->getSize() / $pageSize);
+        if ($currentPage <= $totalPage) {
+            $chunks = array_chunk($collection->getItems(), $pageSize);
+            $countries = $chunks[$currentPage - 1];
+            foreach ($countries as $country) {
+                $regionCollection = $country->getRegionCollection();
+                $regions = [];
+                foreach ($regionCollection as $region) {
+                    $regions[] = $region->getData();
+                }
+                $countryRegion = new CountryRegion();
+                $countryRegion->addData(
+                    [
+                        'country_id' => $country['country_id'],
+                        'name' => $country['name'],
+                        'regions' => $regions
+                    ]
+                );
+                $items[] = $countryRegion;
+            }
+        }
+
+        return $this->getSearchResult()
+            ->setLastPageNumber($totalPage)
+            ->setItems($items)
+            ->setTotalCount($collection->getSize())
+            ->getOutput();
+    }
+
+    /**
+     * @param $searchCriteria
+     *
+     * @return \Magento\Directory\Model\ResourceModel\Country\Collection
+     */
+    protected function getCountryCollection($searchCriteria)
+    {
+        /** @var   \Magento\Directory\Model\ResourceModel\Country\Collection $collection */
+        $collection = $this->countryCollection->create();
+        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
+            $collection->setCurPage(1);
+        } else {
+            $collection->setCurPage($searchCriteria->getData('currentPage'));
+        }
+
+        $collection->setPageSize(300);
+
+        return $collection;
+    }
+
+    /**
+     * @return array
+     * @throws \Exception
+     */
+    public function getCustomerGroupData()
+    {
+        $items = [];
+        $collection = $this->getCustomerGroupCollection($this->getSearchCriteria());
+        if ($collection->getLastPageNumber() < $this->getSearchCriteria()->getData('currentPage')) {
+        } else {
+            foreach ($collection as $group) {
+                $g = new CustomerGroup();
+                /** @var \Magento\Customer\Model\Group $group */
+                $g->addData(
+                    [
+                        'customer_group_id' => $group->getId(),
+                        'customer_group_code' => $group->getCode(),
+                        'tax_class_id' => $group->getData('tax_class_id'),
+                        'tax_class_name' => $group->getTaxClassName(),
+                    ]
+                );
+                $items[] = $g;
+            }
+        }
+
+        return $this->getSearchResult()
+            ->setSearchCriteria($this->getSearchCriteria())
+            ->setItems($items)
+            ->setTotalCount($collection->getSize())
+            ->getOutput();
+    }
+
+    /**
+     * @param $searchCriteria
+     *
+     * @return \Magento\Customer\Model\ResourceModel\Group\Collection
+     */
+    protected function getCustomerGroupCollection($searchCriteria)
+    {
+        /** @var   \Magento\Customer\Model\ResourceModel\Group\Collection $collection */
+        $collection = $this->customerGroupCollectionFactory->create();
+        if (is_nan((float)$searchCriteria->getData('currentPage'))) {
+            $collection->setCurPage(1);
+        } else {
+            $collection->setCurPage($searchCriteria->getData('currentPage'));
+        }
+        if (is_nan((float)$searchCriteria->getData('pageSize'))) {
+            $collection->setPageSize(
+                DataConfig::PAGE_SIZE_LOAD_CUSTOMER
+            );
+        } else {
+            $collection->setPageSize(
+                $searchCriteria->getData('pageSize')
+            );
+        }
+        if ($searchCriteria->getData('entity_id')) {
+            $arr = explode(",", (string)$searchCriteria->getData('entity_id'));
+            $collection->addFieldToFilter('customer_group_id', ['in' => $arr]);
+        }
+
+        return $collection;
     }
 
     /**
@@ -740,7 +758,7 @@ class CustomerManagement extends ServiceAbstract
         if ($address->getId()) {
             $addressModel->load($address->getId());
             if (!$addressModel->getId()) {
-                throw new Exception(__("Can't get address id: ".$address->getId()));
+                throw new Exception(__("Can't get address id: " . $address->getId()));
             }
         }
         $addressModel->addData($address->getData());
@@ -782,22 +800,6 @@ class CustomerManagement extends ServiceAbstract
     }
 
     /**
-     * @return \Magento\Customer\Model\Address
-     */
-    protected function getAddressModel()
-    {
-        return $this->addressFactory->create();
-    }
-
-    /**
-     * @return \Magento\Customer\Model\Customer
-     */
-    protected function getCustomerModel()
-    {
-        return $this->customerFactory->create();
-    }
-
-    /**
      * @param null $searchCriteria
      *
      * @return array
@@ -834,8 +836,8 @@ class CustomerManagement extends ServiceAbstract
                 ->load()
                 ->getTotals()
                 ->getLifetime(),
-            'wishlist'        => $this->wishlistManagement->getWishlistData($customerId, $storeId, $usingProductOnline),
-            'items'           => $items,
+            'wishlist' => $this->wishlistManagement->getWishlistData($customerId, $storeId, $usingProductOnline),
+            'items' => $items,
         ];
 
         if ($this->integrateHelper->isIntegrateRP()
@@ -905,3 +907,4 @@ class CustomerManagement extends ServiceAbstract
         }
     }
 }
+
