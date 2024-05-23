@@ -509,36 +509,42 @@ class CustomerManagement extends ServiceAbstract
                         $customerData['rp_point_adjust']
                     );
             }
-
             // Magento restricts updating customer group for some unknown reason, thus we need to update the customer after creating new
             /** @see \Magento\Customer\Model\AccountManagement::createAccount */
             $customer->setGroupId($customerData->getData('group_id'));
-
             if ($customer instanceof \Magento\Customer\Model\Data\Customer) {
                 $customer = $this->getCustomerModel()->load($customer->getId());
-                $customer->setData('retail_note', $customerData->getData('retail_note'));
-                $customer->setData('retail_telephone_2', $customerData->getData('retail_telephone_2'));
-                $customer->setData('retail_guest_id', $customerData->getData('retail_guest_id'));
-                $this->customerResource->saveAttribute($customer, 'retail_note');
-                $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
-                $this->customerResource->saveAttribute($customer, 'retail_guest_id');
+                if (!empty($customerData->getData('retail_note'))) {
+                    $customer->setData('retail_note', $customerData->getData('retail_note'));
+                    $this->customerResource->saveAttribute($customer, 'retail_note');
+                }
+                if (!empty($customerData->getData('retail_telephone_2'))) {
+                    $customer->setData('retail_telephone_2', $customerData->getData('retail_telephone_2'));
+                    $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
+                }
+                if (!empty($customerData->getData('retail_guest_id'))) {
+                    $customer->setData('retail_guest_id', $customerData->getData('retail_guest_id'));
+                    $this->customerResource->saveAttribute($customer, 'retail_guest_id');
+                }
                 $saveModel = $customer->getDataModel();
-
                 if (!empty($oldAddressData)) {
                     $saveModel->setAddresses($oldAddressData);
                 }
-
                 $this->customerRepository->save($saveModel);
             } else {
-                $this->customerResource->saveAttribute($customer, 'retail_note');
-                $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
-                $this->customerResource->saveAttribute($customer, 'retail_guest_id');
+                if (!empty($customerData->getData('retail_note'))) {
+                    $this->customerResource->saveAttribute($customer, 'retail_note');
+                }
+                if (!empty($customerData->getData('retail_telephone_2'))) {
+                    $this->customerResource->saveAttribute($customer, 'retail_telephone_2');
+                }
+                if (!empty($customerData->getData('retail_guest_id'))) {
+                    $this->customerResource->saveAttribute($customer, 'retail_guest_id');
+                }
                 $saveModel = $customer->getDataModel();
-
                 if (!empty($oldAddressData)) {
                     $saveModel->setAddresses($oldAddressData);
                 }
-
                 $this->customerRepository->save($saveModel);
             }
         } catch (AlreadyExistsException $e) {
@@ -640,8 +646,8 @@ class CustomerManagement extends ServiceAbstract
                 $countryRegion = new CountryRegion();
                 $countryRegion->addData(
                     [
-                        'country_id' => $country['country_id'],
-                        'name' => $country['name'],
+                        'country_id' => $country->getCountryId(),
+                        'name' => $country->getName(),
                         'regions' => $regions
                     ]
                 );
